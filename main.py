@@ -1,6 +1,7 @@
 import eel
 from db import engine
 from sqlalchemy import text
+import bcrypt
 #sofia
 #jacob
 #tim
@@ -32,11 +33,12 @@ def showUsers():
 @eel.expose
 def addUsers(email, password):
     #hashing logic here
+    hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
     with engine.begin() as conn:   # auto-commit
         conn.execute(
             text("INSERT INTO users (email, password_hash) VALUES (:email, :password)"),
-            {"email": email, "password": password}
+            {"email": email, "password": hashed}
         )
     return "User added successfully"
 

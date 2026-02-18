@@ -6,3 +6,4 @@ autopep8
 psycopg2-binary
 SQLAlchemy
 python-dotenv
+bcrypt
