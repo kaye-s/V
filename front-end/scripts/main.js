@@ -6,3 +6,18 @@ function operate(operator) {
 		document.querySelector('#output').innerText = result;
 	});
 }
+
+function loadUsers() {
+	eel.showUsers()(users => {
+		document.querySelector('#output').innerText = JSON.stringify(users, null, 2);
+	});
+}
+
+function addUsers() {
+	var email = document.querySelector('#email').value;
+	var password = document.querySelector('#pass').value;
+
+	eel.addUsers(email, password)(response => {
+		document.querySelector('#output').innerText = response;
+	});
+}
