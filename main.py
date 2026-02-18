@@ -1,13 +1,8 @@
 import eel
-from db import SessionLocal
 #sofia
 #jacob
 #tim
 eel.init('front-end')
-
-session = SessionLocal()
-
-print("Connected successfully!")
 
 
 @eel.expose
