@@ -189,3 +189,4 @@ gradle-app.setting
 
 /.vs/
 node_modules/
+.env
