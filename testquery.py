@@ -1,17 +1,5 @@
-from sqlalchemy import create_engine, text
-
-# Replace these with your Supabase info
-USER = "postgres"
-PASSWORD = "CapstoneVSecurity123"
-HOST = "db.zzraywtbowpotrqbevkz.supabase.co"
-PORT = "5432"
-DATABASE = "postgres"
-
-# This is the connection URL SQLAlchemy needs
-DB_URL = f"postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{DATABASE}"
-
-# Create a connection
-engine = create_engine(DB_URL)
+from sqlalchemy import text
+from db import engine
 
 try:
     with engine.connect() as conn:
