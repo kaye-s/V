@@ -2,6 +2,9 @@ import eel
 from db import engine
 from sqlalchemy import text
 import bcrypt
+import os
+from dotenv import load_dotenv
+from openai import OpenAI
 #sofia
 #jacob
 #tim
@@ -14,6 +17,26 @@ try:
         print("Connected! Server time:", result.fetchone()[0])
 except Exception as e:
     print("Connection failed:", e)
+load_dotenv()
+print("API key loaded:", bool(os.getenv("OPENAI_API_KEY")))
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+@eel.expose
+def ask_api(user_text):
+    print("ask_api received:", user_text)
+
+    resp = client.chat.completions.create(
+            model="gpt-4.1-mini",
+            messages=[{"role": "user", "content": str(user_text)}],
+        )
+
+    answer = resp.choices[0].message.content
+    print("ask_api answer:", answer)
+    return answer
+
+
+
+
 
 @eel.expose
 def add(num1, num2):
@@ -43,4 +66,5 @@ def addUsers(email, password):
     return "User added successfully"
 
 
-eel.start('index.html', size=(1000, 600))
+if __name__ == "__main__":
+    eel.start('index.html', size=(1000, 600), mode='safari')

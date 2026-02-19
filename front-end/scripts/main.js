@@ -20,4 +20,13 @@ function addUsers() {
 	eel.addUsers(email, password)(response => {
 		document.querySelector('#output').innerText = response;
 	});
+function askGPT() {
+	const prompt = document.querySelector('#prompt').value;
+
+	document.querySelector('#output').innerText = "Loading...";
+
+	eel.ask_api(prompt)(result => {
+		document.querySelector('#output').innerText = result;
+	});
+
 }
