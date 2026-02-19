@@ -7,6 +7,19 @@ function operate(operator) {
 	});
 }
 
+function loadUsers() {
+	eel.showUsers()(users => {
+		document.querySelector('#output').innerText = JSON.stringify(users, null, 2);
+	});
+}
+
+function addUsers() {
+	var email = document.querySelector('#email').value;
+	var password = document.querySelector('#pass').value;
+
+	eel.addUsers(email, password)(response => {
+		document.querySelector('#output').innerText = response;
+	});
 function askGPT() {
 	const prompt = document.querySelector('#prompt').value;
 
