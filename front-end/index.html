@@ -2,6 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <title>AutoPen Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- External CSS -->
+    <link rel="stylesheet" href="styles/style.css">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Hello World!</title>
@@ -9,20 +14,103 @@
     <script type="text/javascript" src="/eel.js"></script>
     <script type="text/javascript" src="scripts/main.js"></script>
 </head>
-
 <body>
 <input type="text" id="num-1" placeholder="Enter number.">
 <input type="text" id="num-2" placeholder="Enter number.">
 
-<input type="button" class="submit" value="Add" onclick="operate(eel.add)">
-<input type="button" class="submit" value="Subtract" onclick="operate(eel.subtract)">
+<div class="sidebar">
+    <h2>AutoPen</h2>
+    <ul>
+        <li>Dashboard</li>
+        <li>Start Scan</li>
+        <li>Reports</li>
+        <li>Targets</li>
+        <li>Settings</li>
+    </ul>
+</div>
 
-<hr>
+<div class="main">
+    <div class="header">
+        <h1>Penetration Testing Dashboard</h1>
+        <div class="status">System Status: Active</div>
+    </div>
 
-<input type="text" id="prompt" placeholder="Ask GPT...">
-<input type="button" class="submit" value="Ask GPT" onclick="askGPT()">
+    <div class="cards">
+        <div class="card">
+            <h3>Total Scans</h3>
+            <p>128</p>
+        </div>
+        <div class="card">
+            <h3>Critical Vulnerabilities</h3>
+            <p>12</p>
+        </div>
+        <div class="card">
+            <h3>Medium Vulnerabilities</h3>
+            <p>34</p>
+        </div>
+        <div class="card">
+            <h3>Low Vulnerabilities</h3>
+            <p>56</p>
+        </div>
+    </div>
 
+    <!-- Upload Code -->
+    <div class="code-center">
+        <div class="code-box">
+            <h2>Upload Code for Analysis</h2>
 
-<pre id="output"></pre>
+            <div class="upload-tabs">
+                <button class="tab-btn active" data-tab="file">Upload File</button>
+                <button class="tab-btn" data-tab="paste">Paste Code</button>
+            </div>
+
+            <!-- Upload File -->
+            <div class="tab-content active" id="file">
+                <label class="drop-zone">
+                    <input type="file" hidden>
+                    <p>Drop your code file here<br>or <span>click to browse</span></p>
+                </label>
+            </div>
+
+            <!-- Paste Code -->
+            <div class="tab-content" id="paste">
+                <textarea placeholder="Paste your code here..."></textarea>
+            </div>
+
+            <button class="scan-btn">Start Scan</button>
+        </div>
+    </div>
+
+    <script src="scripts/upload.js"></script>
+
+    <div class="recent-scans">
+        <h3>Recent Scan Results</h3>
+        <table>
+            <thead>
+            <tr>
+                <th>Target</th>
+                <th>Date</th>
+                <th>Risk Level</th>
+                <th>Status</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>example.com</td>
+                <td>02/14/2026</td>
+                <td class="critical">Critical</td>
+                <td>Completed</td>
+            </tr>
+            <tr>
+                <td>test-server.net</td>
+                <td>02/12/2026</td>
+                <td class="low">Low</td>
+                <td>Completed</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
 </body>
 </html>
