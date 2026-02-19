@@ -6,3 +6,14 @@ function operate(operator) {
 		document.querySelector('#output').innerText = result;
 	});
 }
+
+function askGPT() {
+	const prompt = document.querySelector('#prompt').value;
+
+	document.querySelector('#output').innerText = "Loading...";
+
+	eel.ask_api(prompt)(result => {
+		document.querySelector('#output').innerText = result;
+	});
+
+}
