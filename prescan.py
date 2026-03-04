@@ -1,11 +1,4 @@
 #!/usr/bin/env python3
-"""
-Pre-scan 模組：對指定檔案或目錄執行 semgrep 與 gitleaks，輸出合併的 JSON 報告。
-使用方式：
-  python prescan.py [輸入路徑] [-o 輸出.json]
-  不給路徑時預設掃描當前目錄。
-"""
-
 import argparse
 import json
 import os
@@ -15,7 +8,7 @@ from pathlib import Path
 
 
 def run_semgrep(target_path: str) -> dict:
-    """對 target_path 執行 semgrep，回傳 JSON 結果。失敗或未安裝則回傳空結構。"""
+   
     path = Path(target_path).resolve()
     if not path.exists():
         return {"tool": "semgrep", "error": f"path not found: {target_path}", "results": []}
@@ -51,7 +44,7 @@ def run_semgrep(target_path: str) -> dict:
 
 
 def run_gitleaks(target_path: str) -> dict:
-    """對 target_path 執行 gitleaks detect，回傳 JSON 結果。未安裝則回傳空結構。"""
+    """Run gitleaks detect on target_path and return JSON results. Empty structure if unavailable."""
     path = Path(target_path).resolve()
     if not path.exists():
         return {"tool": "gitleaks", "error": f"path not found: {target_path}", "results": []}
@@ -62,7 +55,7 @@ def run_gitleaks(target_path: str) -> dict:
             "--source", source,
             "--no-git",
             "--report-format", "json",
-            "--report-path", "-",  # 將 JSON 輸出到 stdout
+            "--report-path", "-",  # write JSON to stdout
         ]
         out = subprocess.run(
             cmd,
@@ -70,7 +63,7 @@ def run_gitleaks(target_path: str) -> dict:
             text=True,
             timeout=120,
         )
-        # gitleaks 找到 secret 時 exit code 可能為 1，但 stdout 仍有 JSON
+        # when gitleaks finds secrets exit code may be 1, but stdout still contains JSON
         raw = out.stdout.strip()
         if not raw:
             return {"tool": "gitleaks", "error": None, "results": []}
@@ -92,18 +85,18 @@ def main():
         "input_path",
         nargs="?",
         default=".",
-        help="要掃描的檔案或目錄路徑（預設: 當前目錄）",
+        help="File or directory path to scan (default: current directory)",
     )
     parser.add_argument(
         "-o", "--output",
         default="prescan_report.json",
-        help="輸出的 JSON 檔案路徑（預設: prescan_report.json）",
+        help="Output JSON file path (default: prescan_report.json)",
     )
     args = parser.parse_args()
 
     input_path = os.path.normpath(args.input_path)
     if not os.path.exists(input_path):
-        print(f"錯誤：找不到路徑 {input_path}", file=sys.stderr)
+        print(f"Error: path not found {input_path}", file=sys.stderr)
         sys.exit(1)
 
     report = {
@@ -116,7 +109,7 @@ def main():
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(report, f, ensure_ascii=False, indent=2)
 
-    print(f"已寫入: {out_path}")
+    print(f"Report written to: {out_path}")
 
 
 if __name__ == "__main__":
