@@ -17,7 +17,7 @@ class InitialAnalysisTests(APITestCase):
 
     def test_create_analysisTask(self):
 
-        response = self.client.post("/api/GroupFive/",{
+        response = self.client.post("/api/analysis/",{
             "code" : "print('Hello World')", #code to analyze
             "language" : "Python" #language of code
         }, format="json")
@@ -37,7 +37,7 @@ class InitialWorkflowTest(APITestCase):
         self.client.login(username="username", password="password")
 
     def test_initial_workflow(self):
-        response = self.client.post("/api/GroupFive/",{
+        response = self.client.post("/api/analysis/",{
             "code" : "print('Hello Again')", #code to analyze
             "language" : "Python" #language of code
         }, format="json")
@@ -51,7 +51,7 @@ class InitialWorkflowTest(APITestCase):
         #confirm that dummy ran
         self.assertEqual(task.status, "COMPLETED")
 
-        result_response = self.client.get(f"/api/GroupFive/{task_id}")
+        result_response = self.client.get(f"/api/analysis/{task_id}/")
 
         #ensure task endpoint
         self.assertEqual(result_response.status_code, 200)

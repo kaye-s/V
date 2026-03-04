@@ -85,6 +85,8 @@ profile_default/
 ipython_config.py
 
 # pyenv
+#don't add database credentials
+.env
 .python-version
 
 # pipenv

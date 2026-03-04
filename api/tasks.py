@@ -1,5 +1,5 @@
 #from celery import shared_task #task queue to handle simultaneous requests, making testing annoying for now can readd later when necessary
-from GroupFive.models import AnalysisTask
+from api.models import AnalysisTask
 from .dummy_analysis import run_dummy
 
 #@shared_task --from celery, readd later
