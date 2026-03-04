@@ -8,6 +8,8 @@ from openai import OpenAI
 #sofia
 #jacob
 #tim
+#Nathan
+#Sid
 eel.init('front-end')
 
 try:
