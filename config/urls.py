@@ -16,12 +16,18 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from api.views import index, login_view, register_view
+from django.views.static import serve
+from django.conf import settings
+import os
 
 from api.views import *
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('api/', include('api.urls')),
+    path("admin/", admin.site.urls),
+    path("api/", include("api.urls")),
 
-    #path('/api/<uuid:task_id>',)
+    path("", index),
+    path("login/", login_view),
+    path("register/", register_view),
 ]

@@ -15,7 +15,7 @@ class AnalysisTask(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4) #more user id
     user = models.ForeignKey(User, on_delete=models.CASCADE) #user id/user
     input_code = models.TextField() #user provided code
-    language = models.CharField(max_length=50) #language of user provided code
+    language = models.CharField(max_length=50) #language of user provided code--edited out can be added later as necessary
     status = models.CharField(max_length=20, choices=STATUS_OPT) #status of review request
     results = models.JSONField(null=True, blank=True) #results of review
     created_at = models.DateTimeField(auto_now_add=True) #creation timestamp

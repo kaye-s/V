@@ -36,18 +36,6 @@ def ask_api(user_text):
     print("ask_api answer:", answer)
     return answer
 
-
-
-
-
-@eel.expose
-def add(num1, num2):
-    return int(num1) + int(num2)
-
-@eel.expose
-def subtract(num1, num2):
-    return int(num1) - int(num2)
-
 @eel.expose
 def showUsers():
      with engine.connect() as conn:
