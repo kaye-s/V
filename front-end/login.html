@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+  {% load static %}
   <title>Login</title>
 </head>
 <body>
@@ -11,23 +12,22 @@
 <p style="color:red">{{ error }}</p>
 {% endif %}
 
-<form method="POST">
-  {% csrf_token %}
+<form id="loginForm">
 
-  <input id="username" type="text" name="username" placeholder="Username" required>
+  <input id="username" type="text" placeholder="Username" required>
   <br><br>
 
-  <input id="password" type="password" name="password" placeholder="Password" required>
+  <input id="password" type="password" placeholder="Password" required>
   <br><br>
 
-  <button id="loginBtn" type="submit">Login</button>
+  <button type="button" id="loginBtn">Login</button>
+
 </form>
 
 <p>Don't have an account?</p>
 <a href="/register/">Register</a>
 
+<script src="{% static 'scripts/main.js' %}"></script>
+
 </body>
 </html>
-
-{% load static %}
-<script src="{% static 'scripts/main.js' %}"></script>

@@ -50,7 +50,7 @@ class StatusView(APIView):
             "summary": task.results if task.status == "COMPLETED" else None
         })
 
-#user registration
+#user registration. Along with login and logout below, use django.contrib.auth login, logout and authenticate for user handling and creation
 class RegisterView(APIView):
     permission_classes = [AllowAny] #change to IsAuthenticated
 
@@ -72,7 +72,7 @@ class RegisterView(APIView):
             "username": user.username
         }, status=status.HTTP_201_CREATED)
 
-#login
+#Login
 class LoginView(APIView):
     permission_classes = [AllowAny]
 

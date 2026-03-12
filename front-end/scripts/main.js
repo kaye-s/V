@@ -1,8 +1,10 @@
+console.log("main.js loaded")
 document.addEventListener("DOMContentLoaded", function () {
 	const tabButtons = document.querySelectorAll(".tab-btn");
 	const tabContents = document.querySelectorAll(".tab-content");
-	const startScanBtn = document.getElementById("startScanBtn");
-	const loginBtn = document.getElementById("loginBtn");
+	const startScanBtn = document.getElementById("startScanBtn");			//start scan
+	const loginBtn = document.getElementById("loginBtn");					//login
+	const registerBtn = document.getElementById("registerBtn"); 			//register
 
 	tabButtons.forEach(button => {
 		button.addEventListener("click", function () {
@@ -22,8 +24,12 @@ document.addEventListener("DOMContentLoaded", function () {
 	if(loginBtn){
 		loginBtn.addEventListener("click", loginUser);
 	}
+	if(registerBtn){
+		registerBtn.addEventListener("click", registerUser);
+	}
 });
 
+//Start code scan
 async function startScan() {
 	const code = document.getElementById("codeInput").value.trim();
 	const resultsBox = document.getElementById("scanResults");
@@ -73,6 +79,7 @@ async function startScan() {
 	}
 }
 
+//Show Task Status
 function checkStatus(taskId) {
 	const resultsBox = document.getElementById("scanResults");
 
@@ -109,6 +116,7 @@ function checkStatus(taskId) {
 	}, 2000);
 }
 
+//Login
 async function loginUser() {
 
 	const username = document.getElementById("username").value;
@@ -119,7 +127,8 @@ async function loginUser() {
 		const response = await fetch("/api/login/", {
 			method: "POST",
 			headers: {
-				"Content-Type": "application/json"
+				"Content-Type": "application/json",
+				"X-CSRFToken": getCookie("csrftoken")
 			},
 			credentials: "same-origin",
 			body: JSON.stringify({
@@ -142,4 +151,53 @@ async function loginUser() {
 		console.error(error);
 		alert("Login error");
 	}
+}
+
+//Registration
+async function registerUser() {
+	const username = document.getElementById("username").value;
+	const password = document.getElementById("password").value;
+
+	try {
+		const response = await fetch("/api/register/", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				"X-CSRFToken": getCookie("csrftoken")
+			},
+			credentials: "same-origin",
+			body: JSON.stringify({
+				username: username,
+				password: password
+			})
+		});
+
+		const data = await response.json();
+
+		if (!response.ok) {
+			alert(data.error || "Registration failed");
+			return;
+		}
+
+		window.location.href = "/";
+	} catch (error) {
+		console.error(error);
+		alert("Register error");
+	}
+}
+
+//Get CSRF token
+function getCookie(name) {
+	let cookieValue = null;
+	if (document.cookie && document.cookie !== "") {
+		const cookies = document.cookie.split(";");
+		for (let i = 0; i < cookies.length; i++) {
+			const cookie = cookies[i].trim();
+			if (cookie.substring(0, name.length + 1) === (name + "=")) {
+				cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+				break;
+			}
+		}
+	}
+	return cookieValue;
 }
