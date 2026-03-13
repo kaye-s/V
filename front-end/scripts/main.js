@@ -45,7 +45,8 @@ async function startScan() {
 		const response = await fetch("/api/analysis/", {
 			method: "POST",
 			headers: {
-				"Content-Type": "application/json"
+				"Content-Type": "application/json",
+				"X-CSRFToken": getCookie("csrftoken")
 			},
 			body: JSON.stringify({
 				code: code,
