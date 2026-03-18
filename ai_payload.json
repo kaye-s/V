@@ -1,0 +1,103 @@
+{
+  "schema": "ai_payload_v1",
+  "project_id": "121d4d1ff944c1642e8901fe9689b26811561e8437fe55d499cf4a9708c67e7d",
+  "input_path": "/Users/zhangtingen/Downloads/V/testquery.py",
+  "input_type": "file",
+  "pipeline_version": "1.0.0",
+  "normalized_findings": [
+    {
+      "finding_id": "F-001",
+      "issue_type": "database_access_heuristic",
+      "title": "Database Access Pattern Detected",
+      "severity": "low",
+      "confidence": "low",
+      "finding_status": "review_needed",
+      "source_file": "testquery.py",
+      "evidence": [
+        {
+          "line": 0,
+          "category": "database_access",
+          "snippet": "heuristic"
+        }
+      ],
+      "analysis_limitations": [
+        "Heuristic only; line may be 0 when matched on whole file."
+      ]
+    },
+    {
+      "finding_id": "F-002",
+      "issue_type": "sql_execution_review",
+      "title": "SQL Execution Present — Review for Injection / Unsafe Queries",
+      "severity": "medium",
+      "confidence": "medium",
+      "finding_status": "review_needed",
+      "source_file": "testquery.py",
+      "evidence": [
+        {
+          "line": 7,
+          "category": "sql_execution",
+          "snippet": "result = conn.execute(text(\"SELECT NOW();\"))"
+        },
+        {
+          "line": 13,
+          "category": "sql_execution",
+          "snippet": "#conn.execute(text(\"INSERT INTO users(email, password_hash) VALUES ('test2@example.com', '1A2B3C');\"))"
+        },
+        {
+          "line": 14,
+          "category": "sql_execution",
+          "snippet": "result = conn.execute(text(\"SELECT * FROM users;\"))"
+        }
+      ]
+    },
+    {
+      "finding_id": "F-003",
+      "issue_type": "potential_sensitive_data_exposure_via_debug_output",
+      "title": "Potential Sensitive Data Exposure via Debug Output",
+      "severity": "medium",
+      "confidence": "medium",
+      "finding_status": "review_needed",
+      "source_file": "testquery.py",
+      "evidence": [
+        {
+          "line": 8,
+          "category": "debug_output",
+          "snippet": "print(\"Connected! Server time:\", result.fetchone()[0])"
+        },
+        {
+          "line": 10,
+          "category": "debug_output",
+          "snippet": "print(\"Connection failed:\", e)"
+        },
+        {
+          "line": 15,
+          "category": "debug_output",
+          "snippet": "print(result.fetchall())"
+        }
+      ],
+      "analysis_limitations": [
+        "Cannot determine if printed data contains sensitive fields without data flow analysis."
+      ]
+    },
+    {
+      "finding_id": "F-004",
+      "issue_type": "broad_exception_handling",
+      "title": "Broad Exception Handling",
+      "severity": "low",
+      "confidence": "medium",
+      "finding_status": "review_needed",
+      "source_file": "testquery.py",
+      "evidence": [
+        {
+          "line": 9,
+          "category": "broad_except",
+          "snippet": "except Exception as e:"
+        }
+      ]
+    }
+  ],
+  "meta": {
+    "finding_count": 4,
+    "note": "Full source lives in preprocess output only; fetch by file_id/chunk_id if needed."
+  }
+}
