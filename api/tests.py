@@ -1,60 +1,58 @@
+from django.test import TestCase
+
+# Create your tests here.
 from rest_framework.test import APITestCase
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from rest_framework import status
-from .models import *
-from uuid import uuid4
+from .models import CodeSubmission, File, Threat
+from .tasks import run_analysis_sync
 
+User = get_user_model()
 
-class InitialAnalysisTests(APITestCase):
-
-    def setUp(self):
-        #create user
-        self.User = User.objects.create_user(
-            username="username",
-            password="password"
-        )
-        self.client.login(username="username", password="password")
-
-    def test_create_analysisTask(self):
-
-        response = self.client.post("/api/analysis/",{
-            "code" : "print('Hello World')", #code to analyze
-            "language" : "Python" #language of code
-        }, format="json")
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn("task_id", response.data) #task_id in data
-        self.assertEqual(response.data["status"], "QUEUED")
-
-class InitialWorkflowTest(APITestCase):
+class CodeSubmissionTests(APITestCase):
 
     def setUp(self):
-        #create user
-        self.User = User.objects.create_user(
-            username="username",
-            password="password"
+        # create a test user
+        self.user = User.objects.create(
+            email="testuser@example.com",
+            password_hash="hashedpassword"
         )
-        self.client.login(username="username", password="password")
+        # log in manually if using session auth, or skip if using token auth
+        self.client.force_authenticate(user=self.user)
 
-    def test_initial_workflow(self):
-        response = self.client.post("/api/analysis/",{
-            "code" : "print('Hello Again')", #code to analyze
-            "language" : "Python" #language of code
+    def test_create_submission(self):
+        response = self.client.post("/api/scanner/", {
+            "submission_name": "hello.py",
+            "code": "print('Hello World')"
         }, format="json")
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertIn("submission_id", response.data)
 
-        task_id = response.data["task_id"]
+    def test_workflow(self):
+        # create submission
+        submission = CodeSubmission.objects.create(
+            user=self.user,
+            submission_name="hello_again.py"
+        )
 
-        task = AnalysisTask.objects.get(id=task_id)
+        # create associated file
+        File.objects.create(
+            submission=submission,
+            file_name="hello_again.py",
+            file_path="",
+            file_type="code"
+        )
 
-        #confirm that dummy ran
-        self.assertEqual(task.status, "COMPLETED")
+        # run dummy analysis
+        run_analysis_sync(submission.submission_id)
 
-        result_response = self.client.get(f"/api/analysis/{task_id}/")
+        # refresh from DB
+        submission.refresh_from_db()
 
-        #ensure task endpoint
-        self.assertEqual(result_response.status_code, 200)
+        # confirm dummy analysis populated summaries
+        self.assertTrue(submission.simplified_summary)
+        self.assertTrue(submission.detailed_summary)
 
-
-
+        # confirm threats created
+        self.assertGreaterEqual(submission.threats.count(), 1)
