@@ -1,13 +1,15 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from .models import CodeSubmission, File, Threat
 from .serializers import CodeSubmissionSerializer
 from .tasks import run_analysis_sync
 from django.http import JsonResponse
 import json
 from .services.ai_service import ask_ai
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import authenticate, login, logout
+from .models import CodeSubmission, File, Threat
 
 def ask_ai_view(request):
     if request.method == "POST":
@@ -75,3 +77,42 @@ class SubmissionStatusView(APIView):
             "simplified_summary": submission.simplified_summary,
             "threats": threats
         })
+
+# -------------------
+# Login / Logout
+# -------------------
+def login_view(request):
+    error = None
+    if request.method == "POST":
+        username = request.POST['username']
+        password = request.POST['password']
+        user = authenticate(request, username=username, password=password)
+        if user:
+            login(request, user)
+            return redirect('dashboard')
+        else:
+            error = "Invalid username or password"
+    return render(request, 'login.html', {'error': error})
+
+def logout_view(request):
+    logout(request)
+    return redirect('login')
+
+# -------------------
+# Dashboard
+# -------------------
+@login_required(login_url='/login/')  # Redirects to login if not logged in
+def dashboard_view(request):
+    return render(request, 'index.html')
+
+# -------------------
+# Dummy Code Submission
+# -------------------
+@login_required
+def submit_code(request):
+    result = None
+    if request.method == "POST":
+        code = request.POST.get("code")
+        # For demo, just return a dummy response
+        result = f"Received {len(code.splitlines())} lines of code. Dummy analysis: All good!"
+    return render(request, 'submit_code.html', {'result': result})
