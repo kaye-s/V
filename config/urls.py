@@ -21,6 +21,6 @@ from django.views.generic import TemplateView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/scanner/', include('scanner.urls')),  # include scanner app URLs
+    path('api/', include('api.urls')),
     path('', TemplateView.as_view(template_name="index.html")),
 ]
