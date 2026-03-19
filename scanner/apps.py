@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
 
-class OurApplicationConfig(AppConfig):
+class ScannerConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'GroupFive'
+    name = 'scanner'
