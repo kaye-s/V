@@ -25,8 +25,7 @@ function askGPT() {
 
 	document.querySelector('#output').innerText = "Loading...";
 
-	eel.ask_api(prompt)(result => {
+	let newVar = eel.ask_api(prompt)(result => {
 		document.querySelector('#output').innerText = result;
-	});
+	});}}
 
-}
