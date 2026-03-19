@@ -8,4 +8,5 @@ psycopg2-binary
 SQLAlchemy
 python-dotenv
 bcrypt
+djangorestframework
 semgrep
