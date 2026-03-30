@@ -1,120 +1,119 @@
 #all id related lines are noted and can be deleted or changed if user id is skipped or substituted
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
-from django.contrib.auth.models import User
+from rest_framework.permissions import IsAuthenticated
+from .serializers import CodeSubmissionSerializer
+from .tasks import run_analysis_sync
+from django.http import JsonResponse
+import json
+from .services.ai_service import ask_ai
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
-from rest_framework.permissions import AllowAny, IsAuthenticated #for user id
-from api.models import AnalysisTask
-from api.serializers import AnalysisRequestSerializer
-from .tasks import run_analysis_async
-from django.shortcuts import render
+from .models import CodeSubmission, File, Threat
 
-class AnalysisView(APIView):
-    permission_classes = [AllowAny]
+def ask_ai_view(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        user_text = data.get("message")
+
+        response = ask_ai(user_text)
+
+        return JsonResponse({"response": response})
+
+def scan_view(request):
+    target_path = "/path/to/code"  # you could get this from request.POST
+    report = {
+        "input_path": str(Path(target_path).resolve()),
+        "semgrep": run_semgrep(target_path),
+        "gitleaks": run_gitleaks(target_path),
+    }
+    return JsonResponse(report)
+
+# -------------------
+# Create a new code submission and run analysis
+# -------------------
+class SubmissionView(APIView):
+    permission_classes = [IsAuthenticated]
 
     #analysis task endpoint
     def post(self, request):
+        serializer = CodeSubmissionSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-        #assign user to test
-        test_user = User.objects.first()
-        if not test_user:
-            return Response({"error": "No user exists in database."}, status=500)
+        # create submission
+        submission = serializer.save(user=request.user)
 
-        serializer = AnalysisRequestSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True) #deserialize, check correct input and format, raises 400 Bad Request on fail
-
-        task = AnalysisTask.objects.create(
-            user=test_user, #request.user, change back once user implemented further
-            input_code=serializer.validated_data["code"],
-            #uncomment when language fully implemented, currently hardcoded python
-            language="python", #serializer.validated_data["language"],
-            status="QUEUED"
-        )
-
-        run_analysis_async(str(task.id))
+        # run analysis (sync for now)
+        run_analysis_sync(submission.submission_id)
 
         return Response({
-            "task_id": str(task.id),
-            "status": task.status
-        })
+            "submission_id": submission.submission_id,
+            "simplified_summary": submission.simplified_summary
+        }, status=201)
 
-class StatusView(APIView):
-    permission_classes = [AllowAny] #change to IsAuthenticated
-    #status endpoint
-    def get(self, request, task_id):
-        task = AnalysisTask.objects.get(id=task_id) #readd --, user=request.user
-
-        return Response({
-            "status": task.status,
-            "summary": task.results if task.status == "COMPLETED" else None
-        })
-
-#user registration. Along with login and logout below, use django.contrib.auth login, logout and authenticate for user handling and creation
-class RegisterView(APIView):
-    permission_classes = [AllowAny] #change to IsAuthenticated
-
-    def post(self, request):
-        username = request.data.get("username")
-        password = request.data.get("password")
-
-        if not username or not password:
-            return Response({"Error": "Enter Username and Password"}, status=400)
-
-        if User.objects.filter(username=username).exists():
-            return Response({"Error": "Username Taken"}, status=400)
-
-        user = User.objects.create_user(username=username, password=password)
-        login(request, user)
-
-        return Response({
-            "message": "User created successfully.",
-            "username": user.username
-        }, status=status.HTTP_201_CREATED)
-
-#Login
-class LoginView(APIView):
-    permission_classes = [AllowAny]
-
-    def post(self, request):
-        username = request.data.get("username")
-        password = request.data.get("password")
-
-        user = authenticate(request, username=username, password=password)
-
-        if user is None:
-            return Response({"Error": "Login Failed"}, status=401)
-
-        login(request, user)
-
-        return Response({
-            "message": "Login Successful",
-            "username": user.username
-        })
-
-#logout
-class LogoutView(APIView):
-
-    def post(self, request):
-        logout(request)
-        return Response({"message": "Logout Successful"})
-
-#current user
-class MeView(APIView):
+# -------------------
+# Check status and results of a submission
+# -------------------
+class SubmissionStatusView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request):
+    def get(self, request, submission_id):
+        try:
+            submission = CodeSubmission.objects.get(submission_id=submission_id, user=request.user)
+        except CodeSubmission.DoesNotExist:
+            return Response({"error": "Submission not found"}, status=404)
+
+        # If threats exist, include them in the response
+        threats = [
+            {
+                "title": t.title,
+                "severity": t.severity_level,
+                "recommendation": t.recommendation
+            }
+            for t in submission.threats.all()
+        ]
+
         return Response({
-            "id": request.user.id,
-            "username": request.user.username
+            "submission_id": submission.submission_id,
+            "simplified_summary": submission.simplified_summary,
+            "threats": threats
         })
 
-
-def index(request):
-    return render(request, "index.html")
-
+# -------------------
+# Login / Logout
+# -------------------
 def login_view(request):
-    return render(request, "login.html")
+    error = None
+    if request.method == "POST":
+        username = request.POST['username']
+        password = request.POST['password']
+        user = authenticate(request, username=username, password=password)
+        if user:
+            login(request, user)
+            return redirect('dashboard')
+        else:
+            error = "Invalid username or password"
+    return render(request, 'login.html', {'error': error})
 
-def register_view(request):
-    return render(request, "register.html")
+def logout_view(request):
+    logout(request)
+    return redirect('login')
+
+# -------------------
+# Dashboard
+# -------------------
+@login_required(login_url='/login/')  # Redirects to login if not logged in
+def dashboard_view(request):
+    return render(request, 'index.html')
+
+# -------------------
+# Dummy Code Submission
+# -------------------
+@login_required
+def submit_code(request):
+    result = None
+    if request.method == "POST":
+        code = request.POST.get("code")
+        # For demo, just return a dummy response
+        result = f"Received {len(code.splitlines())} lines of code. Dummy analysis: All good!"
+    return render(request, 'submit_code.html', {'result': result})

@@ -3,10 +3,16 @@ from django.urls import path
 from .views import *
 
 urlpatterns = [
-    path("analysis/", AnalysisView.as_view(), name="analysis"),
-    path("analysis/<uuid:task_id>/", StatusView.as_view(), name="analysis-status"),
-    path("register/", RegisterView.as_view(), name="register"),
-    path("login/", LoginView.as_view(), name="login"),
-    path("logout/", LogoutView.as_view(), name="logout"),
-    path("me/", MeView.as_view(), name="me"),
+    # Login / Logout
+    path('login/', views.login_view, name='login'),
+    path('logout/', views.logout_view, name='logout'),
+
+    # Dashboard (default root)
+    path('', views.dashboard_view, name='dashboard'),
+
+    # Create a new code submission and run analysis
+    path('submit-code/', SubmissionView.as_view(), name='create_submission'),
+
+    # Check status / get results of a submission
+    path('submission/<int:submission_id>/', SubmissionStatusView.as_view(), name='submission_status'),
 ]

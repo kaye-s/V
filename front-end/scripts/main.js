@@ -1,4 +1,3 @@
-console.log("main.js loaded")
 document.addEventListener("DOMContentLoaded", function () {
 	const tabButtons = document.querySelectorAll(".tab-btn");
 	const tabContents = document.querySelectorAll(".tab-content");
