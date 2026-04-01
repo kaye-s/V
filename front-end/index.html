@@ -10,12 +10,20 @@
 
     <!-- CSS -->
     <link rel="stylesheet" href="{% static 'styles/style.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 
     <!-- JS -->
     <script type="text/javascript" src="{% static 'scripts/upload.js' %}"></script>
+    <script src="{% static 'scripts/main.js' %}"></script>
 </head>
 <body>
 
+<!-- ☰ Hamburger -->
+<div class="hamburger" id="hamburger">
+    <span></span>
+    <span></span>
+    <span></span>
+</div>
 
 <div class="sidebar">
     <h2>AutoPen</h2>
@@ -26,26 +34,24 @@
         <li>Targets</li>
         <li>Settings</li>
     </ul>
+
+    <!-- 👇 Sidebar Footer (User + Logout) -->
+    <div class="sidebar-footer">
+        <span class="user-name">{{ request.user }}</span>
+
+        <form method="POST" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="logout-btn">
+                Logout
+            </button>
+        </form>
+    </div>
 </div>
 
 <div class="main">
     <div class="header">
         <h1>Penetration Testing Dashboard</h1>
-        <p>User: {{ request.user }}</p>
         <div class="status">System Status: Active</div>
-        <form method="POST" action="{% url 'logout' %}" style="display:inline;">
-            {% csrf_token %}
-            <button type="submit" style="
-        background-color:#ff4d4d;
-        color:white;
-        border:none;
-        padding:8px 12px;
-        border-radius:5px;
-        cursor:pointer;
-    ">
-                Logout
-            </button>
-        </form>
     </div>
 
     <div class="cards">
