@@ -10,8 +10,7 @@ urlpatterns = [
     # Dashboard (default root)
     path('', views.dashboard_view, name='dashboard'),
 
-    # Create a new code submission and run analysis
-    path('submit-code/', SubmissionView.as_view(), name='create_submission'),
+    path('submit/', views.submit_code, name='submit_code'),
 
     # Check status / get results of a submission
     path('submission/<int:submission_id>/', SubmissionStatusView.as_view(), name='submission_status'),

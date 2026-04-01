@@ -73,7 +73,10 @@ body {
 
 /* ================= UPLOAD SECTION ================= */
 .code-center {
-    margin-bottom: 50px;
+    display: flex;
+    justify-content: center;   /* horizontal center */
+    align-items: center;       /* vertical center */
+    min-height: 100vh;         /* full screen height */
 }
 
 .code-box {
