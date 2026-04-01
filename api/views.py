@@ -110,9 +110,17 @@ def dashboard_view(request):
 # -------------------
 @login_required
 def submit_code(request):
+    print("HIT SUBMIT VIEW")
     result = None
+
     if request.method == "POST":
-        code = request.POST.get("code")
-        # For demo, just return a dummy response
-        result = f"Received {len(code.splitlines())} lines of code. Dummy analysis: All good!"
-    return render(request, 'submit_code.html', {'result': result})
+        code = request.POST.get("code", "")
+
+        print("CODE:", code)  # debug
+
+        if not code.strip():
+            result = "No code submitted."
+        else:
+            result = f"Received {len(code.splitlines())} lines of code. Dummy analysis: All good!"
+
+    return render(request, 'index.html', {'result': result})

@@ -31,7 +31,21 @@
 <div class="main">
     <div class="header">
         <h1>Penetration Testing Dashboard</h1>
+        <p>User: {{ request.user }}</p>
         <div class="status">System Status: Active</div>
+        <form method="POST" action="{% url 'logout' %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" style="
+        background-color:#ff4d4d;
+        color:white;
+        border:none;
+        padding:8px 12px;
+        border-radius:5px;
+        cursor:pointer;
+    ">
+                Logout
+            </button>
+        </form>
     </div>
 
     <div class="cards">
@@ -53,30 +67,39 @@
         </div>
     </div>
 
-    <!-- Upload Code -->
     <div class="code-center">
         <div class="code-box">
             <h2>Upload Code for Analysis</h2>
 
-            <div class="upload-tabs">
-                <button class="tab-btn active" data-tab="file">Upload File</button>
-                <button class="tab-btn" data-tab="paste">Paste Code</button>
-            </div>
+            <form method="POST" action="{% url 'submit_code' %}">
+                {% csrf_token %}
 
-            <!-- Upload File -->
-            <div class="tab-content active" id="file">
-                <label class="drop-zone">
-                    <input type="file" hidden>
-                    <p>Drop your code file here<br>or <span>click to browse</span></p>
-                </label>
-            </div>
+                <div class="upload-tabs">
+                    <button type="button" class="tab-btn active" data-tab="file">Upload File</button>
+                    <button type="button" class="tab-btn" data-tab="paste">Paste Code</button>
+                </div>
 
-            <!-- Paste Code -->
-            <div class="tab-content" id="paste">
-                <textarea placeholder="Paste your code here..."></textarea>
-            </div>
+                <!-- Upload File -->
+                <div class="tab-content active" id="file">
+                    <label class="drop-zone">
+                        <input type="file" name="file">
+                        <p>Drop your code file here<br>or <span>click to browse</span></p>
+                    </label>
+                </div>
 
-            <button class="scan-btn">Start Scan</button>
+                <!-- Paste Code -->
+                <div class="tab-content" id="paste">
+                    <textarea name="code" placeholder="Paste your code here..."></textarea>
+                </div>
+
+                <button type="submit" class="scan-btn">Start Scan</button>
+            </form>
+
+            {% if result %}
+            <div style="margin-top:20px; color:green;">
+                {{ result }}
+            </div>
+            {% endif %}
         </div>
     </div>
 
