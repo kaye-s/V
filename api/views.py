@@ -1,4 +1,4 @@
-from django.contrib.auth.hashers import make_password
+from django.contrib.auth.hashers import make_password, check_password
 from django.shortcuts import render, redirect
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -85,25 +85,35 @@ class SubmissionStatusView(APIView):
 def login_view(request):
     error = None
     if request.method == "POST":
-        username = request.POST['username']
-        password = request.POST['password']
-        user = authenticate(request, username=username, password=password)
-        if user:
-            login(request, user)
-            return redirect('dashboard')
+        email = request.POST.get("email")
+        password = request.POST.get("password")
+
+        if not email or not password:
+            error = "Enter Email and Password"
         else:
-            error = "Invalid username or password"
+            try:
+                user = User.objects.get(email=email)
+
+                if check_password(password, user.password_hash):
+                    request.session["user_id"] = user.user_id
+                    request.session["user_email"] = user.email
+                    return redirect("dashboard")
+                else:
+                    error = "Invalid Email or Password"
+            except User.DoesNotExist:
+                error = "Invalid Email or Password"
     return render(request, 'login.html', {'error': error})
 
 def logout_view(request):
-    logout(request)
+    request.session.flush()
     return redirect('login')
 
 # -------------------
 # Dashboard
 # -------------------
-@login_required(login_url='/login/')  # Redirects to login if not logged in
 def dashboard_view(request):
+    if "user_id" not in request.session:
+        return redirect("/login/")
     return render(request, 'index.html')
 
 # -------------------
@@ -137,10 +147,10 @@ def register_view(request):
         password = request.POST.get("password")
 
         if not email or not password:
-            error = "Enter Username and Password"
+            error = "Enter Email and Password"
 
         elif User.objects.filter(email=email).exists():
-            error = "Username Taken"
+            error = "Email Already in Use"
 
         else:
             hashed_pass = make_password(password)
