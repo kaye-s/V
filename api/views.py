@@ -1,3 +1,4 @@
+from django.contrib.auth.hashers import make_password
 from django.shortcuts import render, redirect
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -9,7 +10,7 @@ import json
 from .services.ai_service import ask_ai
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
-from .models import CodeSubmission, File, Threat
+from .models import CodeSubmission, File, Threat, User
 
 def ask_ai_view(request):
     if request.method == "POST":
@@ -124,3 +125,28 @@ def submit_code(request):
             result = f"Received {len(code.splitlines())} lines of code. Dummy analysis: All good!"
 
     return render(request, 'index.html', {'result': result})
+
+# -----------------
+# User Registration
+# -----------------
+def register_view(request):
+    error = None
+
+    if request.method == "POST":
+        email = request.POST.get("email")
+        password = request.POST.get("password")
+
+        if not email or not password:
+            error = "Enter Username and Password"
+
+        elif User.objects.filter(email=email).exists():
+            error = "Username Taken"
+
+        else:
+            hashed_pass = make_password(password)
+
+            user = User.objects.create(email=email, password_hash=hashed_pass)
+            request.session["user_id"] = user.user_id
+            return redirect('dashboard')
+
+    return render(request, 'register.html', {'error': error})
