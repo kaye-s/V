@@ -243,6 +243,15 @@ tr:hover {
 }
 
 /* ================= SEVERITY COLORS ================= */
-.critical { color: #fb7185; font-weight: bold; }
-.medium   { color: #facc15; font-weight: bold; }
-.low      { color: #34d399; font-weight: bold; }
+.Critical { color: #fb7185; font-weight: bold; }
+.High     { color: #f97316; font-weight: bold; }
+.Medium   { color: #facc15; font-weight: bold; }
+.Low      { color: #34d399; font-weight: bold; }
+
+input, select {
+    background: rgba(17, 24, 39, 0.6);
+    color: #ffffff;
+    border: 1px solid rgba(168, 85, 247, 0.2);
+    border-radius: 8px;
+    padding: 10px;
+}

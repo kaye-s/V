@@ -76,6 +76,10 @@ class CWE(models.Model):
     severity = models.CharField(max_length=20, null=True, blank=True)
     categories = models.TextField(null=True, blank=True)
 
+    class Meta:
+                db_table = 'cwe'
+                managed = False
+
     def __str__(self):
         return f"{self.cwe_id} - {self.name}"
 

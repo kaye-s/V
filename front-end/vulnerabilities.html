@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+{% load static %}
+<html>
+<head>
+    <title>Vulnerabilities</title>
+    <link rel="stylesheet" href="{% static 'styles/style.css' %}">
+</head>
+
+<body>
+
+<!-- ================= SIDEBAR ================= -->
+<div class="sidebar">
+    <h2>Security Dashboard</h2>
+    <ul>
+        <li><a href="/">Home</a></li>
+        <li><a href="{% url 'vulnerability_list' %}">Vulnerabilities</a></li>
+    </ul>
+</div>
+
+<!-- ================= MAIN CONTENT ================= -->
+<div class="main">
+
+    <!-- HEADER -->
+    <div class="header">
+        <h1>Vulnerability Database</h1>
+        <div class="status">Live Data</div>
+    </div>
+
+    <!-- SEARCH / FILTER CARD -->
+    <div class="card">
+        <h3 style="margin-bottom: 15px;">Search & Filter</h3>
+
+        <form method="GET" style="display:flex; gap:10px; flex-wrap:wrap;">
+
+            <input
+                    type="text"
+                    name="q"
+                    placeholder="Search by name, description, or CWE..."
+                    value="{{ query }}"
+            >
+
+            <select name="severity">
+                <option value="">All Severities</option>
+                <option value="Critical" {% if selected_severity == "Critical" %}selected{% endif %}>Critical</option>
+                <option value="High" {% if selected_severity == "High" %}selected{% endif %}>High</option>
+                <option value="Medium" {% if selected_severity == "Medium" %}selected{% endif %}>Medium</option>
+                <option value="Low" {% if selected_severity == "Low" %}selected{% endif %}>Low</option>
+            </select>
+
+            <button class="scan-btn" type="submit">Apply</button>
+
+        </form>
+    </div>
+
+    <!-- TABLE -->
+    <div class="recent-scans">
+        <h2>All Vulnerabilities</h2>
+
+        <table>
+            <thead>
+            <tr>
+                <th>CWE</th>
+                <th>Name</th>
+                <th>Category</th>
+                <th>CVSS</th>
+                <th>Score</th>
+                <th>Severity</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            {% for v in vulnerabilities %}
+            <tr>
+                <td>{{ v.cwe_id }}</td>
+
+                <td title="{{ v.description }}">
+                    {{ v.name }}
+                </td>
+
+                <td>{{ v.categories }}</td>
+                <td>{{ v.cvss_version }}</td>
+                <td>{{ v.average_score }}</td>
+
+                <td class="{{ v.severity }}">
+                    {{ v.severity }}
+                </td>
+            </tr>
+
+            {% empty %}
+            <tr>
+                <td colspan="6">No vulnerabilities found.</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+</body>
+</html>
