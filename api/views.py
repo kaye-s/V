@@ -7,6 +7,12 @@ from .tasks import run_analysis_sync
 from django.http import JsonResponse
 import json
 from .services.ai_service import ask_ai
+from .services.incident_report_ai import generate_incident_report_ai_payload
+from .utils.incident_report import (
+    DISCLAIMER_TEXT,
+    merge_incident_report_context,
+    parse_llm_json,
+)
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from .models import CodeSubmission, File, Threat
@@ -114,72 +120,74 @@ def dashboard_view(request):
 # -------------------
 @login_required
 def submit_code(request):
-    print("HIT SUBMIT VIEW")
-    result = None
+    if request.method != "POST":
+        return redirect("dashboard")
 
-    if request.method == "POST":
-        code = request.POST.get("code", "")
+    code = request.POST.get("code", "").strip()
+    if not code:
+        return render(
+            request,
+            "index.html",
+            {"result": "No code submitted."},
+        )
 
-        print("CODE:", code)  # debug
+    # Create an isolated temp directory so semgrep/gitleaks can scan it safely.
+    tmp_dir_path = Path(tempfile.mkdtemp(prefix="autopen_"))
+    try:
+        target_file_path = tmp_dir_path / "target.py"
+        target_file_path.write_text(code, encoding="utf-8")
 
-        if not code.strip():
-            result = "No code submitted."
-        else:
-            # Create an isolated temp directory so semgrep/gitleaks can scan it safely.
-            tmp_dir_path = Path(tempfile.mkdtemp(prefix="autopen_"))
-            try:
-                target_file_path = tmp_dir_path / "target.py"
-                target_file_path.write_text(code, encoding="utf-8")
+        # Pre-process: run semgrep + gitleaks against the temporary file.
+        semgrep_report = run_semgrep(str(target_file_path))
+        gitleaks_report = run_gitleaks(str(target_file_path))
 
-                # Pre-process: run semgrep + gitleaks against the temporary file.
-                semgrep_report = run_semgrep(str(target_file_path))
-                gitleaks_report = run_gitleaks(str(target_file_path))
+        # Keep the prompt size bounded.
+        max_code_chars = 8000
+        truncated = code[:max_code_chars]
+        trunc_note = ""
+        if len(code) > max_code_chars:
+            trunc_note = f"\n\n[NOTE] Code was truncated to the first {max_code_chars} characters."
 
-                # Keep the prompt size bounded.
-                max_code_chars = 8000
-                truncated = code[:max_code_chars]
-                trunc_note = ""
-                if len(code) > max_code_chars:
-                    trunc_note = f"\n\n[NOTE] Code was truncated to the first {max_code_chars} characters."
+        # Keep tool findings compact to reduce token usage.
+        semgrep_results = semgrep_report.get("results", []) or []
+        gitleaks_results = gitleaks_report.get("results", []) or []
+        semgrep_results = semgrep_results[:20]
+        gitleaks_results = gitleaks_results[:20]
 
-                # Keep tool findings compact to reduce token usage.
-                semgrep_results = semgrep_report.get("results", []) or []
-                gitleaks_results = gitleaks_report.get("results", []) or []
-                semgrep_results = semgrep_results[:20]
-                gitleaks_results = gitleaks_results[:20]
+        # Assemble a single "passage" for OpenAI analysis.
+        passage = {
+            "user_code": truncated + trunc_note,
+            "semgrep": {
+                "error": semgrep_report.get("error"),
+                "results": semgrep_results,
+            },
+            "gitleaks": {
+                "error": gitleaks_report.get("error"),
+                "results": gitleaks_results,
+            },
+        }
 
-                # Assemble a single "passage" for OpenAI analysis.
-                passage = {
-                    "user_code": truncated + trunc_note,
-                    "semgrep": {
-                        "error": semgrep_report.get("error"),
-                        "results": semgrep_results,
-                    },
-                    "gitleaks": {
-                        "error": gitleaks_report.get("error"),
-                        "results": gitleaks_results,
-                    },
-                }
+        raw_json = generate_incident_report_ai_payload(passage)
+        ai_data = parse_llm_json(raw_json)
+        parse_error = None
+        if not ai_data:
+            parse_error = (
+                "The model returned empty or non-JSON output; placeholder values are shown where needed."
+            )
 
-                prompt = (
-                    "You are a security analysis assistant.\n\n"
-                    "Analyze this passage and tell me the consequences of following up and not following up.\n\n"
-                    "## Passage (code + tool findings)\n"
-                    f"{json.dumps(passage, ensure_ascii=False, indent=2)}\n\n"
-                    "## Output requirements\n"
-                    "1. Provide a clear overall risk summary (1-2 sentences).\n"
-                    "2. Provide 'Consequences if following up' and 'Consequences if not following up'.\n"
-                    "3. For each consequence, include which tool finding(s) it is based on.\n"
-                    "4. End with 'Recommended next steps' (3-5 bullet points) focusing on practical remediation.\n"
-                    "5. Do not invent findings that are not supported by the passage.\n"
-                )
-
-                result = ask_ai(prompt)
-            except Exception as e:
-                # Return an error string so the front-end still shows something useful.
-                result = f"Analysis failed: {type(e).__name__}: {e}"
-            finally:
-                # Best-effort cleanup of temporary files.
-                shutil.rmtree(tmp_dir_path, ignore_errors=True)
-
-    return render(request, 'index.html', {'result': result})
+        ctx = merge_incident_report_context(
+            request=request,
+            ai=ai_data,
+            parse_error=parse_error,
+        )
+        ctx["disclaimer"] = DISCLAIMER_TEXT
+        return render(request, "incident_report.html", ctx)
+    except Exception as e:
+        return render(
+            request,
+            "index.html",
+            {"result": f"Analysis failed: {type(e).__name__}: {e}"},
+        )
+    finally:
+        # Best-effort cleanup of temporary files.
+        shutil.rmtree(tmp_dir_path, ignore_errors=True)

@@ -1,0 +1,204 @@
+/* Incident report page — grey + seafoam, minimal */
+
+:root {
+  --bg: #f4f7f6;
+  --surface: #ffffff;
+  --text: #334155;
+  --muted: #64748b;
+  --seafoam: #5eead4;
+  --seafoam-dark: #0d9488;
+  --border: #cbd5e1;
+  --grey-bar: #e2e8f0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body.incident-report-body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.ir-wrap {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 4rem;
+}
+
+.ir-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.ir-back {
+  display: inline-block;
+  font-size: 0.9rem;
+  color: var(--seafoam-dark);
+  text-decoration: none;
+}
+
+.ir-back:hover {
+  text-decoration: underline;
+}
+
+.ir-btn-download {
+  font-size: 0.9rem;
+  font-family: inherit;
+  padding: 0.5rem 1.1rem;
+  border-radius: 999px;
+  border: 1px solid var(--seafoam-dark);
+  background: var(--surface);
+  color: var(--seafoam-dark);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.ir-btn-download:hover {
+  background: rgba(94, 234, 212, 0.25);
+  color: #0f766e;
+}
+
+.ir-parse-error {
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  color: #92400e;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+}
+
+.ir-header {
+  border-left: 4px solid var(--seafoam);
+  padding-left: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.ir-kicker {
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 0.35rem;
+}
+
+.ir-title {
+  font-size: 1.85rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem;
+  color: #1e293b;
+}
+
+.ir-subtitle {
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--seafoam-dark);
+  margin: 0;
+}
+
+.ir-section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 2rem 0 0.75rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 2px solid var(--seafoam);
+}
+
+.ir-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.ir-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.ir-table th,
+.ir-table td {
+  padding: 0.65rem 0.85rem;
+  text-align: left;
+  border-bottom: 1px solid var(--grey-bar);
+  vertical-align: top;
+}
+
+.ir-table th {
+  width: 32%;
+  font-weight: 600;
+  color: #475569;
+  background: #f8fafc;
+}
+
+.ir-table tr:last-child th,
+.ir-table tr:last-child td {
+  border-bottom: none;
+}
+
+.ir-cvss-table th {
+  width: 25%;
+  text-align: center;
+  background: #f1f5f9;
+}
+
+.ir-cvss-table td {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.ir-block h4 {
+  margin: 1rem 0 0.5rem;
+  font-size: 0.95rem;
+  color: #0f766e;
+}
+
+.ir-block p {
+  margin: 0 0 0.75rem;
+  white-space: pre-wrap;
+}
+
+.ir-block ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.ir-block li {
+  margin-bottom: 0.35rem;
+}
+
+.ir-disclaimer {
+  margin-top: 2.5rem;
+  padding: 1rem 1.25rem;
+  background: #f1f5f9;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.ir-sign {
+  margin-top: 2rem;
+  display: grid;
+  gap: 1rem;
+  font-size: 0.95rem;
+}
+
+.ir-sign-row {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.35rem;
+  min-height: 2rem;
+}
