@@ -8,10 +8,15 @@ from .tasks import run_analysis_sync
 from django.http import JsonResponse
 import json
 from .services.ai_service import ask_ai
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth import authenticate, login, logout
 from .models import CodeSubmission, File, Threat, CWE, User
 from django.db.models import Q
+from django.shortcuts import render, redirect
+from django.contrib.auth.hashers import check_password, make_password
+
+def require_login(request):
+    if "user_id" not in request.session:
+        return redirect("login")
+    return None
 
 def ask_ai_view(request):
     if request.method == "POST":
@@ -113,15 +118,16 @@ def logout_view(request):
 # Dashboard
 # -------------------
 def dashboard_view(request):
-    if "user_id" not in request.session:
-        return redirect("/login/")
+    if require_login(request):
+        return require_login(request)
     return render(request, 'index.html')
 
 # -------------------
 # Dummy Code Submission
 # -------------------
-@login_required
 def submit_code(request):
+    if require_login(request):
+            return require_login(request)
     print("HIT SUBMIT VIEW")
     result = None
 
@@ -182,7 +188,7 @@ def register_view(request):
             hashed_pass = make_password(password)
 
             user = User.objects.create(email=email, password_hash=hashed_pass)
-            request.session["user_id"] = user.user_id
+            request.session["user_email"] = user.email
             return redirect('dashboard')
 
     return render(request, 'register.html', {'error': error})

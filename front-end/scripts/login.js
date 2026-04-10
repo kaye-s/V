@@ -17,7 +17,12 @@ const form = document.querySelector("form");
 const button = document.querySelector(".login-btn");
 
 form.addEventListener("submit", () => {
-    button.innerText = "Logging in...";
+    if (button.innerText.toLowerCase().includes("register")) {
+        button.innerText = "Creating account...";
+    } else {
+        button.innerText = "Logging in...";
+    }
+
     button.classList.add("loading");
     button.disabled = true;
 });

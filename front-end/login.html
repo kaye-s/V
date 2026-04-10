@@ -19,16 +19,9 @@
   <form method="POST">
     {% csrf_token %}
 
-      <input type="text" name="email" placeholder="Email / Username" required style="width:100%; padding:10px; margin-bottom:10px;">
-
-      <input type="password" name="password" placeholder="Password" required style="width:100%; padding:10px; margin-bottom:15px;">
-
-      <button type="submit" class="scan-btn" style="width:100%;">Login</button>
-    </form>
-
-    <p style="text-align:center; margin-top:15px;">
-      Don't have an account?
-    </p>
+    <div class="input-group">
+      <input type="text" name="email" placeholder="Email" required>
+    </div>
 
     <div class="input-group">
       <input type="password" name="password" placeholder="Password" required>
