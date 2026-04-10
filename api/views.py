@@ -10,7 +10,8 @@ import json
 from .services.ai_service import ask_ai
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
-from .models import CodeSubmission, File, Threat, User
+from .models import CodeSubmission, File, Threat, CWE, User
+from django.db.models import Q
 
 def ask_ai_view(request):
     if request.method == "POST":
@@ -136,6 +137,31 @@ def submit_code(request):
 
     return render(request, 'index.html', {'result': result})
 
+def vulnerability_list(request):
+   query = request.GET.get('q', '').strip()
+   severity = request.GET.get('severity', '').strip()
+
+   vulnerabilities = CWE.objects.all()
+
+   # ONLY apply search if actually typed
+   if query:
+       vulnerabilities = vulnerabilities.filter(
+           Q(name__icontains=query) |
+           Q(description__icontains=query) |
+           Q(cwe_id__icontains=query)
+       )
+
+   # Apply severity filter independently
+   if severity:
+       vulnerabilities = vulnerabilities.filter(severity=severity)
+
+   context = {
+        'vulnerabilities': vulnerabilities,
+        'query': query,
+        'selected_severity': severity,
+    }
+
+   return render(request, 'vulnerabilities.html', context)
 # -----------------
 # User Registration
 # -----------------
