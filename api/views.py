@@ -21,7 +21,28 @@ def ask_ai_view(request):
         return JsonResponse({"response": response})
 
 def scan_view(request):
-    target_path = "/path/to/code"  # you could get this from request.POST
+    if request.method =="POST"
+
+    # ---Handle file upload --- 
+    if 'file' in request.FILES:
+        uploaded_file = request.FILES['files']
+
+        import tempfile, os
+        suffix = os.path.splittext(uploaded_file.name)[1]
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+            for chunk in uploaded_file.chunks():
+                tmp.write(chunk)
+            target_path = tmp.name
+    
+    elif 'code' in request.POST:
+        import tempfile
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.txt', mode='w') as tmp:
+            tmp.write(request.POST.get('code'))
+            target_path = tmp.name
+    
+    else:
+        target_path = "/path/to/code"  # you could get this from request.POST
+
     report = {
         "input_path": str(Path(target_path).resolve()),
         "semgrep": run_semgrep(target_path),
