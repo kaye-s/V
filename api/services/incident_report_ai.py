@@ -52,7 +52,7 @@ def generate_incident_report_ai_payload(passage: dict[str, Any]) -> str:
     """
     user_prompt = build_incident_report_user_prompt(passage)
     kwargs: dict[str, Any] = {
-        "model": "gpt-4.1-mini",
+        "model": "gpt-5.4-nano",
         "messages": [
             {"role": "system", "content": _SYSTEM},
             {"role": "user", "content": user_prompt},

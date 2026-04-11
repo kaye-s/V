@@ -71,7 +71,7 @@
         <div class="code-box">
             <h2>Upload Code for Analysis</h2>
 
-            <form method="POST" action="{% url 'submit_code' %}">
+            <form method="POST" action="{% url 'submit_code' %}" enctype="multipart/form-data">
                 {% csrf_token %}
 
                 <div class="upload-tabs">
@@ -82,7 +82,7 @@
                 <!-- Upload File -->
                 <div class="tab-content active" id="file">
                     <label class="drop-zone">
-                        <input type="file" name="file">
+                        <input type="file" name="file" accept=".py,.js,.ts,.tsx,.jsx,.java,.go,.rs,.c,.cpp,.h,.cs,.php,.rb,.swift,.kt,.sql,.sh,.yaml,.yml,.json,.xml,.html,.css,.md,.txt">
                         <p>Drop your code file here<br>or <span>click to browse</span></p>
                     </label>
                 </div>
