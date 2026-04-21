@@ -7,6 +7,9 @@ urlpatterns = [
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
 
+    # Register
+    path('register/', views.register_view, name='register'),
+
     # Dashboard (default root)
     path('', views.dashboard_view, name='dashboard'),
 
@@ -14,4 +17,6 @@ urlpatterns = [
 
     # Check status / get results of a submission
     path('submission/<int:submission_id>/', SubmissionStatusView.as_view(), name='submission_status'),
+
+    path('vulnerabilities/', views.vulnerability_list, name='vulnerability_list'),
 ]

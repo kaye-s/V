@@ -31,7 +31,7 @@
 <div class="main">
     <div class="header">
         <h1>Penetration Testing Dashboard</h1>
-        <p>User: {{ request.user }}</p>
+        <p>User: {{ user_email|default:"Unknown User" }}</p>
         <div class="status">System Status: Active</div>
         <form method="POST" action="{% url 'logout' %}" style="display:inline;">
             {% csrf_token %}
@@ -51,7 +51,7 @@
     <div class="cards">
         <div class="card">
             <h3>Total Scans</h3>
-            <p>128</p>
+            <p>{{scans|length}}</p>
         </div>
         <div class="card">
             <h3>Critical Vulnerabilities</h3>
@@ -115,18 +115,20 @@
             </tr>
             </thead>
             <tbody>
+            {% for scan in scans %}
             <tr>
-                <td>example.com</td>
-                <td>02/14/2026</td>
-                <td class="critical">Critical</td>
-                <td>Completed</td>
+                <td>{{ scan.submission_name|default:"Unnamed submission" }}</td>
+                <td>{{ scan.uploaded_at|date:"m/d/Y" }}</td>
+                <td class="{% if scan.risk_level == 'Critical' %}critical{% elif scan.risk_level == 'High' %}high{% elif scan.risk_level == 'Medium' %}medium{% elif scan.risk_level == 'Low' %}low{% else %}info{% endif %}">
+                    {{ scan.risk_level|default:"N/A" }}
+                </td>
+                <td>{{ scan.scan_status|default:"Unknown" }}</td>
             </tr>
+            {% empty %}
             <tr>
-                <td>test-server.net</td>
-                <td>02/12/2026</td>
-                <td class="low">Low</td>
-                <td>Completed</td>
+                <td colspan="4">No scans yet.</td>
             </tr>
+            {% endfor %}
             </tbody>
         </table>
     </div>

@@ -15,16 +15,22 @@ from .utils.incident_report import (
 )
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
-from .models import CodeSubmission, File, Threat
+from .models import CodeSubmission, File, Threat, CWE, User
 from pathlib import Path
 import re
 import tempfile
 import shutil
 from .utils.prescan import run_semgrep, run_gitleaks
+from django.shortcuts import render, redirect
+from django.contrib.auth.hashers import check_password, make_password
 
 # Max upload size for scan (bytes).
 MAX_UPLOAD_BYTES = 2 * 1024 * 1024
 
+def require_login(request):
+    if "user_id" not in request.session:
+        return redirect("login")
+    return None
 
 def _safe_upload_basename(original_name: str) -> str:
     """Return a single path segment safe for writing under a temp directory."""
@@ -55,13 +61,32 @@ def _run_incident_scan(request, code: str, source: dict):
     source: {"origin": "upload"|"paste", "filename": str}
     """
     tmp_dir_path = Path(tempfile.mkdtemp(prefix="autopen_"))
+
     try:
         if source.get("origin") == "upload":
             fname = _safe_upload_basename(source.get("filename") or "upload.txt")
         else:
             fname = "pasted_code.py"
+
         target_file_path = tmp_dir_path / fname
         target_file_path.write_text(code, encoding="utf-8")
+
+        # Create submission record early
+        user_id = request.session.get("user_id")
+        if not user_id:
+            return render(
+                request,
+                "index.html",
+                {"result": "You must be logged in to run a scan."},
+            )
+
+        user = User.objects.get(user_id=user_id)
+
+        submission = CodeSubmission.objects.create(
+            user=user,
+            submission_name=fname,
+            scan_status="Running",
+        )
 
         # Pre-process: run semgrep + gitleaks against the temporary file.
         semgrep_report = run_semgrep(str(target_file_path))
@@ -96,11 +121,50 @@ def _run_incident_scan(request, code: str, source: dict):
 
         raw_json = generate_incident_report_ai_payload(passage)
         ai_data = parse_llm_json(raw_json)
+
         parse_error = None
         if not ai_data:
             parse_error = (
                 "The model returned empty or non-JSON output; placeholder values are shown where needed."
             )
+            ai_data = {}
+
+        # Build simple incident ID
+        incident_id = f"CYB-{submission.uploaded_at.year}-{submission.submission_id}"
+
+        # If you later save a real HTML file, replace this with the actual path
+        report_path = f"reports/{incident_id}.html"
+
+        # Safely convert score
+        base_score_raw = (
+            ai_data.get("cvss", {}).get("base")
+            if isinstance(ai_data.get("cvss"), dict)
+            else None
+        )
+
+        base_score = None
+        try:
+            if base_score_raw not in (None, "", "N/A"):
+                base_score = Decimal(str(base_score_raw))
+        except Exception:
+            base_score = None
+
+        # Update dashboard/report fields
+        submission.submission_name = fname
+        submission.risk_level = ai_data.get("severity_level", "Informational")
+        submission.scan_status = "Completed"
+        submission.overall_risk_score = base_score
+        submission.simplified_summary = ai_data.get(
+            "status",
+            "No findings evidenced"
+        )
+        submission.detailed_summary = ai_data.get(
+            "what_happened",
+            "No additional analysis details available."
+        )
+        submission.incident_id = incident_id
+        submission.report_html_path = report_path
+        submission.save()
 
         ctx = merge_incident_report_context(
             request=request,
@@ -108,7 +172,11 @@ def _run_incident_scan(request, code: str, source: dict):
             parse_error=parse_error,
         )
         ctx["disclaimer"] = DISCLAIMER_TEXT
+        ctx["submission_id"] = submission.submission_id
+        ctx["incident_id"] = incident_id
+
         return render(request, "incident_report.html", ctx)
+
     except Exception as e:
         return render(
             request,
@@ -192,31 +260,48 @@ class SubmissionStatusView(APIView):
 def login_view(request):
     error = None
     if request.method == "POST":
-        username = request.POST['username']
-        password = request.POST['password']
-        user = authenticate(request, username=username, password=password)
-        if user:
-            login(request, user)
-            return redirect('dashboard')
+        email = request.POST.get("email")
+        password = request.POST.get("password")
+
+        if not email or not password:
+            error = "Enter Email and Password"
         else:
-            error = "Invalid username or password"
+            try:
+                user = User.objects.get(email=email)
+
+                if check_password(password, user.password_hash):
+                    request.session["user_id"] = user.user_id
+                    request.session["user_email"] = user.email
+                    return redirect("dashboard")
+                else:
+                    error = "Invalid Email or Password"
+            except User.DoesNotExist:
+                error = "Invalid Email or Password"
     return render(request, 'login.html', {'error': error})
 
 def logout_view(request):
-    logout(request)
+    request.session.flush()
     return redirect('login')
+
 
 # -------------------
 # Dashboard
 # -------------------
-@login_required(login_url='/login/')  # Redirects to login if not logged in
+#@login_required(login_url='/login/')  # Redirects to login if not logged in
 def dashboard_view(request):
-    return render(request, 'index.html')
+    if "user_id" not in request.session:
+        return redirect("/login/")
+
+    scans = CodeSubmission.objects.filter(
+        user_id=request.session["user_id"]
+    ).order_by("-uploaded_at")[:10]
+
+    return render(request, "index.html", {"scans": scans})
 
 # -------------------
 # Dummy Code Submission
 # -------------------
-@login_required
+#@login_required
 def submit_code(request):
     if request.method != "POST":
         return redirect("dashboard")
@@ -254,3 +339,53 @@ def submit_code(request):
         "index.html",
         {"result": "No code submitted. Upload a file or paste code."},
     )
+
+def vulnerability_list(request):
+    query = request.GET.get('q', '').strip()
+    severity = request.GET.get('severity', '').strip()
+
+    vulnerabilities = CWE.objects.all()
+
+    # ONLY apply search if actually typed
+    if query:
+        vulnerabilities = vulnerabilities.filter(
+            Q(name__icontains=query) |
+            Q(description__icontains=query) |
+            Q(cwe_id__icontains=query)
+        )
+
+    # Apply severity filter independently
+    if severity:
+        vulnerabilities = vulnerabilities.filter(severity=severity)
+
+    context = {
+        'vulnerabilities': vulnerabilities,
+        'query': query,
+        'selected_severity': severity,
+    }
+
+    return render(request, 'vulnerabilities.html', context)
+# -----------------
+# User Registration
+# -----------------
+def register_view(request):
+    error = None
+
+    if request.method == "POST":
+        email = request.POST.get("email")
+        password = request.POST.get("password")
+
+        if not email or not password:
+            error = "Enter Email and Password"
+
+        elif User.objects.filter(email=email).exists():
+            error = "Email Already in Use"
+
+        else:
+            hashed_pass = make_password(password)
+
+            user = User.objects.create(email=email, password_hash=hashed_pass)
+            request.session["user_email"] = user.email
+            return redirect('dashboard')
+
+    return render(request, 'register.html', {'error': error})
