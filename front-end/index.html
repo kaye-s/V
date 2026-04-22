@@ -116,7 +116,7 @@
             </thead>
             <tbody>
             {% for scan in scans %}
-            <tr>
+            <tr onclick="window.location='{% url 'report_detail' scan.submission_id %}'" style="cursor:pointer;">
                 <td>{{ scan.submission_name|default:"Unnamed submission" }}</td>
                 <td>{{ scan.uploaded_at|date:"m/d/Y" }}</td>
                 <td class="{% if scan.risk_level == 'Critical' %}critical{% elif scan.risk_level == 'High' %}high{% elif scan.risk_level == 'Medium' %}medium{% elif scan.risk_level == 'Low' %}low{% else %}info{% endif %}">
@@ -126,7 +126,7 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="4">No scans yet.</td>
+                <td colspan="4">No recent scans yet.</td>
             </tr>
             {% endfor %}
             </tbody>

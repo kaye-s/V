@@ -29,6 +29,7 @@ class CodeSubmission(models.Model):
     risk_level = models.CharField(max_length=20, null=True, blank=True)
     incident_id = models.CharField(max_length=100, null=True, blank=True)
     report_html_path = models.TextField(null=True, blank=True)
+    report_data = models.JSONField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.submission_name} by {self.user.email}"

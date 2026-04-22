@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -389,3 +389,27 @@ def register_view(request):
             return redirect('dashboard')
 
     return render(request, 'register.html', {'error': error})
+
+def report_detail_view(request, submission_id):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return redirect("/login/")
+
+    submission = get_object_or_404(
+        CodeSubmission,
+        submission_id=submission_id,
+        user_id=user_id
+    )
+
+    ai_data = submission.report_data or {}
+
+    ctx = merge_incident_report_context(
+        request=request,
+        ai=ai_data,
+        parse_error=None,
+    )
+
+    ctx["disclaimer"] = DISCLAIMER_TEXT
+    ctx["submission"] = submission
+
+    return render(request, "incident_report.html", ctx)
