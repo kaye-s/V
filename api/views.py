@@ -1,12 +1,18 @@
+from decimal import Decimal
 from django.contrib.auth.hashers import make_password, check_password
 from django.shortcuts import render, redirect, get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from django.http import JsonResponse
+from django.db.models import Q
+from pathlib import Path
+import json
+import re
+import tempfile
+import shutil
+
 from .serializers import CodeSubmissionSerializer
 from .tasks import run_analysis_sync
-from django.http import JsonResponse
-import json
 from .services.ai_service import ask_ai
 from .services.incident_report_ai import generate_incident_report_ai_payload
 from .utils.incident_report import (
@@ -14,8 +20,8 @@ from .utils.incident_report import (
     merge_incident_report_context,
     parse_llm_json,
 )
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth import authenticate, login, logout
+from .utils.prescan import run_semgrep, run_gitleaks
+
 from .models import CodeSubmission, File, Threat, CWE, User
 from django.db.models import Q
 from pathlib import Path
@@ -166,6 +172,7 @@ def _run_incident_scan(request, code: str, source: dict):
         )
         submission.incident_id = incident_id
         submission.report_html_path = report_path
+        submission.report_data = ai_data
         submission.save()
 
         ctx = merge_incident_report_context(
@@ -210,10 +217,20 @@ def scan_view(request):
 # -------------------
 # Create a new code submission and run analysis
 # -------------------
+
 class SubmissionView(APIView):
-    permission_classes = [IsAuthenticated]
 
     def post(self, request):
+
+        user_id = request.session.get("user_id")
+        if not user_id:
+            return Response({"error": "Authentication required"}, status=401)
+
+        try:
+            user = User.objects.get(user_id=user_id)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=404)
+
         serializer = CodeSubmissionSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -228,15 +245,19 @@ class SubmissionView(APIView):
             "simplified_summary": submission.simplified_summary
         }, status=201)
 
+
 # -------------------
 # Check status and results of a submission
 # -------------------
 class SubmissionStatusView(APIView):
-    permission_classes = [IsAuthenticated]
 
     def get(self, request, submission_id):
+        user_id = request.session.get("user_id")
+        if not user_id:
+            return Response({"error": "Authentication required"}, status=401)
+
         try:
-            submission = CodeSubmission.objects.get(submission_id=submission_id, user=request.user)
+            submission = CodeSubmission.objects.get(submission_id=submission_id, user_id=user_id)
         except CodeSubmission.DoesNotExist:
             return Response({"error": "Submission not found"}, status=404)
 
@@ -255,6 +276,7 @@ class SubmissionStatusView(APIView):
             "simplified_summary": submission.simplified_summary,
             "threats": threats
         })
+
 
 # -------------------
 # Login / Logout
@@ -289,8 +311,9 @@ def logout_view(request):
 # Dashboard
 # -------------------
 def dashboard_view(request):
-    if require_login(request):
-        return require_login(request)
+    auth_redirect = require_login(request)
+    if auth_redirect:
+        return auth_redirect
 
     scans = CodeSubmission.objects.filter(
         user_id=request.session["user_id"]
@@ -389,6 +412,7 @@ def register_view(request):
             hashed_pass = make_password(password)
 
             user = User.objects.create(email=email, password_hash=hashed_pass)
+            request.session["user_id"] = user.user_id
             request.session["user_email"] = user.email
             return redirect('dashboard')
 

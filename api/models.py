@@ -37,6 +37,9 @@ class CodeSubmission(models.Model):
     def __str__(self):
         return f"{self.submission_name} by {self.user.email}"
 
+    class Meta:
+        db_table = "code_submissions"
+
 # -------------------
 # Files
 # -------------------
