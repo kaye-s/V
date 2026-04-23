@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <title>AutoPen Dashboard</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="{% static 'styles/style.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <!-- JS -->
+    <script type="text/javascript" src="{% static 'scripts/upload.js' %}"></script>
+    <script src="{% static 'scripts/main.js' %}"></script>
+</head>
+<body>
+
+<!-- ☰ Hamburger -->
+<div class="hamburger" id="hamburger">
+    <span></span>
+    <span></span>
+    <span></span>
+</div>
+
+<div class="sidebar">
+    <h2>AutoPen</h2>
+    <ul>
+        <li>Dashboard</li>
+        <li>Start Scan</li>
+        <li>Reports</li>
+        <li>Targets</li>
+        <li>Settings</li>
+        <li><a href="{% url 'vulnerability_list' %}">Vulnerabilities</a></li>
+    </ul>
+
+    <!-- 👇 Sidebar Footer (User + Logout) -->
+    <div class="sidebar-footer">
+        <span class="user-name">{{ request.user }}</span>
+
+        <form method="POST" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="logout-btn">
+                Logout
+            </button>
+        </form>
+    </div>
+</div>
+
+<div class="main">
+    <div class="header">
+        <h1>Penetration Testing Dashboard</h1>
+        <p>User: {{ user_email|default:"Unknown User" }}</p>
+        <div class="status">System Status: Active</div>
+        <form method="POST" action="{% url 'logout' %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" style="
+        background-color:#ff4d4d;
+        color:white;
+        border:none;
+        padding:8px 12px;
+        border-radius:5px;
+        cursor:pointer;
+    ">
+                Logout
+            </button>
+        </form>
+    </div>
+
+    <div class="cards">
+        <div class="card">
+            <h3>Total Scans</h3>
+            <p>{{scans|length}}</p>
+        </div>
+        <div class="card">
+            <h3>Critical Vulnerabilities</h3>
+            <p>12</p>
+        </div>
+        <div class="card">
+            <h3>Medium Vulnerabilities</h3>
+            <p>34</p>
+        </div>
+        <div class="card">
+            <h3>Low Vulnerabilities</h3>
+            <p>56</p>
+        </div>
+    </div>
+
+    <div class="code-center">
+        <div class="code-box">
+            <h2>Upload Code for Analysis</h2>
+
+            <form method="POST" action="{% url 'submit_code' %}" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                <div class="upload-tabs">
+                    <button type="button" class="tab-btn active" data-tab="file">Upload File</button>
+                    <button type="button" class="tab-btn" data-tab="paste">Paste Code</button>
+                </div>
+
+                <!-- Upload File -->
+                <div class="tab-content active" id="file">
+                    <label class="drop-zone">
+                        <input type="file" name="file" accept=".py,.js,.ts,.tsx,.jsx,.java,.go,.rs,.c,.cpp,.h,.cs,.php,.rb,.swift,.kt,.sql,.sh,.yaml,.yml,.json,.xml,.html,.css,.md,.txt">
+                        <p>Drop your code file here<br>or <span>click to browse</span></p>
+                    </label>
+                </div>
+
+                <!-- Paste Code -->
+                <div class="tab-content" id="paste">
+                    <textarea name="code" placeholder="Paste your code here..."></textarea>
+                </div>
+
+                <button type="submit" class="scan-btn">Start Scan</button>
+            </form>
+
+            {% if result %}
+            <div style="margin-top:20px; color:green;">
+                {{ result }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="recent-scans">
+        <h3>Recent Scan Results</h3>
+        <table>
+            <thead>
+            <tr>
+                <th>Target</th>
+                <th>Date</th>
+                <th>Risk Level</th>
+                <th>Status</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for scan in scans %}
+            <tr onclick="window.location='{% url 'report_detail' scan.submission_id %}'" style="cursor:pointer;">
+                <td>{{ scan.submission_name|default:"Unnamed submission" }}</td>
+                <td>{{ scan.uploaded_at|date:"m/d/Y" }}</td>
+                <td class="{% if scan.risk_level == 'Critical' %}critical{% elif scan.risk_level == 'High' %}high{% elif scan.risk_level == 'Medium' %}medium{% elif scan.risk_level == 'Low' %}low{% else %}info{% endif %}">
+                    {{ scan.risk_level|default:"N/A" }}
+                </td>
+                <td>{{ scan.scan_status|default:"Unknown" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4">No recent scans yet.</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+</body>
+</html>
