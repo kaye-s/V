@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Incident Report — AutoPen</title>
+  <link rel="stylesheet" href="{% static 'styles/incident_report.css' %}">
+</head>
+<body class="incident-report-body">
+
+<div class="ir-wrap">
+  <div class="ir-actions">
+    <a class="ir-back" href="{% url 'dashboard' %}">← Back to dashboard</a>
+    <button type="button" class="ir-btn-download" id="ir-download-html" data-incident-id="{{ incident_id }}">
+      Download HTML
+    </button>
+  </div>
+
+  {% if parse_error %}
+  <div class="ir-parse-error">{{ parse_error }}</div>
+  {% endif %}
+
+  <header class="ir-header">
+    <p class="ir-kicker">{{ report_kicker }}</p>
+    <h1 class="ir-title">{{ report_title }}</h1>
+    <p class="ir-subtitle">{{ report_subtitle }}</p>
+  </header>
+
+  <h2 class="ir-section-title">Incident overview</h2>
+  <div class="ir-card">
+    <table class="ir-table">
+      <tbody>
+        <tr><th scope="row">Incident ID</th><td>{{ incident_id }}</td></tr>
+        <tr><th scope="row">Date &amp; time</th><td>{{ report_datetime }}</td></tr>
+        <tr><th scope="row">Reported by</th><td>{{ reported_by }}</td></tr>
+        <tr><th scope="row">Severity level</th><td>{{ severity_level }}</td></tr>
+        <tr><th scope="row">Incident type</th><td>{{ incident_type }}</td></tr>
+        <tr><th scope="row">Systems affected</th><td>{{ systems_affected }}</td></tr>
+        <tr><th scope="row">Discovery method</th><td>{{ discovery_method }}</td></tr>
+        <tr><th scope="row">Status</th><td>{{ status }}</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 class="ir-section-title">CVSS score (0.0–10.0)</h2>
+  <div class="ir-card">
+    <table class="ir-table ir-cvss-table">
+      <thead>
+        <tr>
+          <th scope="col">Base</th>
+          <th scope="col">Threat</th>
+          <th scope="col">Environmental</th>
+          <th scope="col">Supplemental</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>{{ cvss_base }}</td>
+          <td>{{ cvss_threat }}</td>
+          <td>{{ cvss_environmental }}</td>
+          <td>{{ cvss_supplemental }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 class="ir-section-title">Description &amp; impact</h2>
+  <div class="ir-card ir-block">
+    <h4>What happened</h4>
+    <p>{{ what_happened|linebreaksbr }}</p>
+
+    <h4>Impact</h4>
+    {% if impact_items %}
+    <ul>
+      {% for item in impact_items %}
+      <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p>—</p>
+    {% endif %}
+
+    <h4>Consequences if following up</h4>
+    <p>{% if follow_up_consequences %}{{ follow_up_consequences|linebreaksbr }}{% else %}—{% endif %}</p>
+
+    <h4>Consequences if not following up</h4>
+    <p>{% if no_follow_up_consequences %}{{ no_follow_up_consequences|linebreaksbr }}{% else %}—{% endif %}</p>
+  </div>
+
+  <h2 class="ir-section-title">Response &amp; resolution</h2>
+  <div class="ir-card">
+    <table class="ir-table">
+      <thead>
+        <tr>
+          <th scope="col">Action</th>
+          <th scope="col">Details</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in response_actions %}
+        <tr>
+          <td>{{ row.action }}</td>
+          <td>{{ row.details }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="2">No remediation steps were returned by the model.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <p class="ir-disclaimer">{{ disclaimer }}</p>
+
+  <div class="ir-sign">
+    <div class="ir-sign-row"><strong>Sign:</strong></div>
+    <div class="ir-sign-row"><strong>Date:</strong></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const btn = document.getElementById("ir-download-html");
+  if (!btn) return;
+
+  function escapeHtml(text) {
+    return String(text)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  btn.addEventListener("click", async function () {
+    let inlineCss = "";
+    const link = document.querySelector('link[rel="stylesheet"]');
+    if (link && link.href) {
+      try {
+        const res = await fetch(link.href, { credentials: "same-origin" });
+        if (res.ok) {
+          inlineCss = "<style>\n" + (await res.text()) + "\n</style>";
+        }
+      } catch (_) {
+        /* offline / CORS: file will still download without inlined CSS */
+      }
+    }
+
+    const bodyClone = document.body.cloneNode(true);
+    bodyClone.querySelectorAll("script").forEach(function (el) {
+      el.remove();
+    });
+    const cloneBtn = bodyClone.querySelector("#ir-download-html");
+    if (cloneBtn) {
+      const actions = cloneBtn.closest(".ir-actions");
+      if (actions) {
+        const backOnly = document.createElement("div");
+        backOnly.className = "ir-actions";
+        const back = actions.querySelector(".ir-back");
+        if (back) {
+          backOnly.appendChild(back.cloneNode(true));
+        }
+        actions.replaceWith(backOnly);
+      } else {
+        cloneBtn.remove();
+      }
+    }
+
+    const title = document.title || "Incident Report";
+    const rawId = btn.getAttribute("data-incident-id") || "report";
+    const safeId = rawId.replace(/[^a-zA-Z0-9-_]/g, "_");
+    const filename = "incident-report-" + safeId + ".html";
+
+    const doc =
+      "<!DOCTYPE html>\n" +
+      '<html lang="en">\n' +
+      "<head>\n" +
+      '<meta charset="UTF-8">\n' +
+      '<meta name="viewport" content="width=device-width, initial-scale=1.0">\n' +
+      "<title>" + escapeHtml(title) + "</title>\n" +
+      inlineCss +
+      "\n</head>\n" +
+      '<body class="incident-report-body">\n' +
+      bodyClone.innerHTML +
+      "\n</body>\n</html>";
+
+    const blob = new Blob([doc], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.rel = "noopener";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  });
+})();
+</script>
+
+</body>
+</html>

@@ -19,4 +19,6 @@ urlpatterns = [
     path('submission/<int:submission_id>/', SubmissionStatusView.as_view(), name='submission_status'),
 
     path('vulnerabilities/', views.vulnerability_list, name='vulnerability_list'),
+
+    path("report/<int:submission_id>/", views.report_detail_view, name="report_detail"),
 ]

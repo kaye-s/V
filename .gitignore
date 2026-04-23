@@ -192,3 +192,6 @@ gradle-app.setting
 /.vs/
 node_modules/
 .env
+/api/migrations/0001_initial.py
+/api/migrations/0002_codesubmission_incident_id_and_more.py
+/api/migrations/0003_codesubmission_report_data.py
