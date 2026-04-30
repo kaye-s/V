@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AutoPen Reports</title>
+
+  <link rel="stylesheet" href="{% static 'styles/style.css' %}">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <script src="{% static 'scripts/main.js' %}"></script>
+</head>
+<body>
+
+<!-- Hamburger -->
+<div class="hamburger" id="hamburger">
+  <span></span>
+  <span></span>
+  <span></span>
+</div>
+
+<!-- Sidebar -->
+<div class="sidebar">
+  <div class="sidebar-header">
+    <h2>AutoPen</h2>
+  </div>
+
+  <ul>
+    <li><a href="/">Dashboard</a></li>
+    <li><a href="{% url 'reports' %}">Reports</a></li>
+    <li><a href="{% url 'settings' %}">Settings</a></li>
+    <li><a href="{% url 'vulnerability_list' %}">Vulnerabilities</a></li>
+  </ul>
+
+  <div class="sidebar-footer">
+    <span class="user-name">{{ request.user }}</span>
+
+    <form method="POST" action="{% url 'logout' %}">
+      {% csrf_token %}
+      <button type="submit" class="logout-btn">Logout</button>
+    </form>
+  </div>
+</div>
+
+<!-- Main Content -->
+<div class="main">
+  <div class="header">
+    <h1>Scan Reports</h1>
+    <div class="status">
+      <div class="status-dot"></div>
+      System Active
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="cards">
+    <div class="card">
+      <h3>Total Reports</h3>
+      <p>42</p>
+    </div>
+    <div class="card">
+      <h3>Critical Findings</h3>
+      <p>8</p>
+    </div>
+    <div class="card">
+      <h3>Last Scan</h3>
+      <p>Apr 14, 2026</p>
+    </div>
+  </div>
+
+  <!-- Reports Table -->
+  <div class="recent-scans">
+    <h3>Generated Reports</h3>
+
+    <table>
+      <thead>
+      <tr>
+        <th>Target</th>
+        <th>Date</th>
+        <th>Risk</th>
+        <th>Status</th>
+        <th>View</th>
+      </tr>
+      </thead>
+
+      <tbody>
+      <tr>
+        <td>example.java</td>
+        <td>04/14/2026</td>
+        <td class="Critical">Critical</td>
+        <td>Completed</td>
+        <td><button class="scan-btn">View</button></td>
+      </tr>
+
+      <tr>
+        <td>test-api.py</td>
+        <td>04/13/2026</td>
+        <td class="High">High</td>
+        <td>Completed</td>
+        <td><button class="scan-btn">View</button></td>
+      </tr>
+
+      <tr>
+        <td>dev.c</td>
+        <td>04/12/2026</td>
+        <td class="Low">Low</td>
+        <td>Completed</td>
+        <td><button class="scan-btn">View</button></td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+</body>
+</html>

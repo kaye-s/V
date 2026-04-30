@@ -3,6 +3,7 @@
 <html>
 <head>
     <title>Vulnerabilities</title>
+
     <link rel="stylesheet" href="{% static 'styles/style.css' %}">
     <script src="{% static 'scripts/main.js' %}"></script>
 </head>
@@ -16,18 +17,23 @@
     <span></span>
 </div>
 
+<!-- ================= SIDEBAR ================= -->
 <div class="sidebar">
-    <h2>AutoPen</h2>
+
+    <!-- HEADER -->
+    <div class="sidebar-header">
+        <h2>AutoPen</h2>
+    </div>
+
+    <!-- NAVIGATION -->
     <ul>
         <li><a href="{% url 'dashboard' %}">Dashboard</a></li>
-        <li>Start Scan</li>
-        <li>Reports</li>
-        <li>Targets</li>
-        <li>Settings</li>
+        <li><a href="{% url 'reports' %}">Reports</a></li>
+        <li><a href="{% url 'settings' %}">Settings</a></li>
         <li><a href="{% url 'vulnerability_list' %}">Vulnerabilities</a></li>
     </ul>
 
-    <!-- 👇 Sidebar Footer (User + Logout) -->
+    <!-- FOOTER (THIS IS NOW CORRECTLY PLACED) -->
     <div class="sidebar-footer">
         <span class="user-name">{{ request.user }}</span>
 
@@ -38,12 +44,12 @@
             </button>
         </form>
     </div>
+
 </div>
 
 <!-- ================= MAIN CONTENT ================= -->
 <div class="main">
 
-    <!-- HEADER -->
     <div class="header">
         <h1>Vulnerability Database</h1>
         <div class="status">Live Data</div>
@@ -95,18 +101,11 @@
             {% for v in vulnerabilities %}
             <tr>
                 <td>{{ v.cwe_id }}</td>
-
-                <td title="{{ v.description }}">
-                    {{ v.name }}
-                </td>
-
+                <td title="{{ v.description }}">{{ v.name }}</td>
                 <td>{{ v.categories }}</td>
                 <td>{{ v.cvss_version }}</td>
                 <td>{{ v.average_score }}</td>
-
-                <td class="{{ v.severity }}">
-                    {{ v.severity }}
-                </td>
+                <td class="{{ v.severity }}">{{ v.severity }}</td>
             </tr>
 
             {% empty %}
@@ -116,6 +115,7 @@
             {% endfor %}
             </tbody>
         </table>
+
     </div>
 
 </div>

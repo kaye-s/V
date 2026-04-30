@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Settings - AutoPen</title>
+
+  <link rel="stylesheet" href="{% static 'styles/style.css' %}">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <script src="{% static 'scripts/main.js' %}"></script>
+</head>
+<body>
+
+<!-- Hamburger -->
+<div class="hamburger" id="hamburger">
+  <span></span>
+  <span></span>
+  <span></span>
+</div>
+
+<!-- Sidebar -->
+<div class="sidebar">
+  <div class="sidebar-header">
+    <h2>AutoPen</h2>
+  </div>
+
+  <ul>
+    <li><a href="{% url 'dashboard' %}">Dashboard</a></li>
+    <li><a href="{% url 'reports' %}">Reports</a></li>
+    <li><a href="{% url 'settings' %}">Settings</a></li>
+    <li><a href="{% url 'vulnerability_list' %}">Vulnerabilities</a></li>
+  </ul>
+
+  <div class="sidebar-footer">
+    <span class="user-name">{{ request.user }}</span>
+
+    <form method="POST" action="{% url 'logout' %}">
+      {% csrf_token %}
+      <button type="submit" class="logout-btn">Logout</button>
+    </form>
+  </div>
+</div>
+
+<!-- Main -->
+<div class="main">
+  <div class="header">
+    <h1>Settings</h1>
+    <div class="status">
+      <div class="status-dot"></div>
+      Online
+    </div>
+  </div>
+
+  <div class="split-layout">
+
+    <!-- Profile Settings -->
+    <div class="code-box">
+      <h2>Profile Settings</h2>
+
+      <form method="POST">
+        {% csrf_token %}
+
+        <label>Username</label>
+        <input type="text" name="username" value="{{ request.user.username }}">
+
+        <label>Email</label>
+        <input type="email" name="email" value="{{ request.user.email }}">
+
+        <button type="submit" class="scan-btn">Save Changes</button>
+      </form>
+    </div>
+
+    <!-- Security Settings -->
+    <div class="code-box">
+      <h2>Security</h2>
+
+      <form method="POST">
+        {% csrf_token %}
+
+        <label>New Password</label>
+        <input type="password" name="password">
+
+        <label>Confirm Password</label>
+        <input type="password" name="confirm_password">
+
+        <button type="submit" class="scan-btn">Update Password</button>
+      </form>
+    </div>
+
+  </div>
+
+  <!-- Preferences -->
+  <div class="recent-scans" style="margin-top: 30px;">
+    <h3>Preferences</h3>
+
+    <form method="POST">
+      {% csrf_token %}
+
+      <label>Default AI Model</label>
+      <select name="scan_level">
+        <option>5.4 Pro</option>
+        <option>5.4 Nano</option>
+        <option>5.4 Lite</option>
+      </select>
+
+      <br><br>
+
+      <label>
+        <input type="checkbox" name="notifications">
+        Enable Notifications
+      </label>
+
+      <br><br>
+
+      <button type="submit" class="scan-btn">Save Preferences</button>
+    </form>
+  </div>
+
+</div>
+
+</body>
+</html>

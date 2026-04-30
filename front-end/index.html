@@ -26,15 +26,15 @@
 </div>
 
 <div class="sidebar">
-    <h2>AutoPen</h2>
-    <ul>
-        <li>Dashboard</li>
-        <li>Start Scan</li>
-        <li>Reports</li>
-        <li>Targets</li>
-        <li>Settings</li>
-        <li><a href="{% url 'vulnerability_list' %}">Vulnerabilities</a></li>
-    </ul>
+    <div class="sidebar-header">
+        <h2>AutoPen</h2>
+    </div>
+        <ul>
+            <li class="active"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+            <li><a href="{% url 'reports' %}">Reports</a></li>
+            <li><a href="{% url 'settings' %}">Settings</a></li>
+            <li><a href="{% url 'vulnerability_list' %}">Vulnerabilities</a></li>
+        </ul>
 
     <!-- 👇 Sidebar Footer (User + Logout) -->
     <div class="sidebar-footer">
