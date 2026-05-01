@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings — AutoPen</title>
+    <link rel="stylesheet" href="{% static 'styles/style.css' %}">
+    <script src="{% static 'scripts/main.js' %}" defer></script>
+</head>
+<body class="theme-{{ user_theme|default:'dark' }}">
+{% include "includes/app_sidebar.html" %}
+
+<div class="main">
+    <div class="header">
+        <h1>Settings</h1>
+        <div class="status">Personal Preferences</div>
+    </div>
+
+    <div class="code-box">
+        {% if messages %}
+        {% for message in messages %}
+        <div class="form-message">{{ message }}</div>
+        {% endfor %}
+        {% endif %}
+
+        <form method="POST">
+            {% csrf_token %}
+            <div class="settings-grid">
+                <label>
+                    Background theme
+                    <select name="theme">
+                        {% for value, label in theme_choices %}
+                        <option value="{{ value }}" {% if settings.theme == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+
+                <label>
+                    AI model
+                    <select name="ai_model">
+                        {% for model in ai_models %}
+                        <option value="{{ model }}" {% if settings.ai_model == model %}selected{% endif %}>{{ model }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+            </div>
+
+            <p class="muted">Model choices come from your environment: `OPENAI_MODEL_CHOICES`, with `OPENAI_REPORT_MODEL` as the fallback.</p>
+            <button class="scan-btn" type="submit">Save Settings</button>
+        </form>
+    </div>
+</div>
+{% include "includes/ai_assistant.html" %}
+</body>
+</html>

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Department Approvals — AutoPen</title>
+    <link rel="stylesheet" href="{% static 'styles/style.css' %}">
+    <script src="{% static 'scripts/main.js' %}" defer></script>
+</head>
+<body class="theme-{{ user_theme|default:'dark' }}">
+{% include "includes/app_sidebar.html" %}
+
+<div class="main">
+    <div class="header">
+        <h1>Department Approvals</h1>
+        <div class="status">{{ department_label }}</div>
+    </div>
+
+    <div class="recent-scans">
+        <h3>Pending Requests</h3>
+        <table>
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Requested At</th>
+                <th>Action</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for req in pending_requests %}
+            <tr>
+                <td>{{ req.user.full_name }}</td>
+                <td>{{ req.user.email }}</td>
+                <td>{{ req.created_at|date:"m/d/Y H:i" }}</td>
+                <td>
+                    <form method="POST" style="display:inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="request_id" value="{{ req.request_id }}">
+                        <button class="scan-btn" type="submit" name="action" value="approve">Approve</button>
+                        <button class="logout-btn" type="submit" name="action" value="reject">Reject</button>
+                    </form>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4">No pending department requests.</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% include "includes/ai_assistant.html" %}
+</body>
+</html>

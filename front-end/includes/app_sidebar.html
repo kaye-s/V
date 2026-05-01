@@ -1,0 +1,50 @@
+{% load static %}
+{% with u=request.resolver_match.url_name|default_if_none:"" %}
+<!-- ☰ Hamburger -->
+<div class="hamburger" id="hamburger" role="button" tabindex="0" aria-label="Toggle navigation menu" aria-controls="app-sidebar" aria-expanded="false">
+    <span></span>
+    <span></span>
+    <span></span>
+</div>
+
+<aside class="sidebar" id="app-sidebar" aria-label="Main navigation">
+    <h2 class="sidebar-brand">AutoPen</h2>
+    <nav class="sidebar-nav">
+        <ul>
+            <li>
+                <a href="{% url 'dashboard' %}" class="sidebar-link {% if u == 'dashboard' %}active{% endif %}">Dashboard</a>
+            </li>
+            <li>
+                <a href="{% url 'start_scan' %}" class="sidebar-link {% if u == 'start_scan' %}active{% endif %}">Start Scan</a>
+            </li>
+            <li>
+                <a href="{% url 'reports' %}" class="sidebar-link {% if u == 'reports' or u == 'report_detail' %}active{% endif %}">Reports</a>
+            </li>
+            <li>
+                <a href="{% url 'vulnerability_list' %}" class="sidebar-link {% if u == 'vulnerability_list' %}active{% endif %}">Vulnerabilities</a>
+            </li>
+            {% if user_role == "manager" %}
+            <li>
+                <a href="{% url 'approval_queue' %}" class="sidebar-link {% if u == 'approval_queue' %}active{% endif %}">Department Approvals</a>
+            </li>
+            {% endif %}
+            <li>
+                <a href="{% url 'targets' %}" class="sidebar-link {% if u == 'targets' %}active{% endif %}">Targets</a>
+            </li>
+            <li>
+                <a href="{% url 'settings' %}" class="sidebar-link {% if u == 'settings' %}active{% endif %}">Settings</a>
+            </li>
+        </ul>
+    </nav>
+
+    <div class="sidebar-footer">
+        <span class="user-name" title="Signed-in user">{{ user_name|default:user_email|default:"—" }}</span>
+        <form method="POST" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="logout-btn">
+                Logout
+            </button>
+        </form>
+    </div>
+</aside>
+{% endwith %}

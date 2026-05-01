@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Start Scan — AutoPen</title>
+    <link rel="stylesheet" href="{% static 'styles/style.css' %}">
+    <script type="text/javascript" src="{% static 'scripts/upload.js' %}" defer></script>
+    <script src="{% static 'scripts/main.js' %}" defer></script>
+</head>
+<body class="theme-{{ user_theme|default:'dark' }}">
+{% include "includes/app_sidebar.html" %}
+
+<div class="main">
+    <div class="header">
+        <h1>Start Scan</h1>
+        <div class="status">Advanced Analysis</div>
+    </div>
+
+    <div class="code-box wide-box">
+        <h2>Submit Code or Ask AI</h2>
+        <form method="POST" action="{% url 'start_scan' %}" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="line-range">
+                <label>
+                    Report name (optional)
+                    <input type="text" name="report_title" maxlength="200" placeholder="e.g. Auth service review">
+                </label>
+            </div>
+
+            <div class="upload-tabs">
+                <button type="button" class="tab-btn active" data-tab="file">Upload File</button>
+                <button type="button" class="tab-btn" data-tab="paste">Paste Code</button>
+                <button type="button" class="tab-btn" data-tab="question">Ask AI</button>
+            </div>
+
+            <div class="tab-content active" id="file">
+                <label class="drop-zone">
+                    <input type="file" name="file" accept=".py,.js,.ts,.tsx,.jsx,.java,.go,.rs,.c,.cpp,.h,.cs,.php,.rb,.swift,.kt,.sql,.sh,.yaml,.yml,.json,.xml,.html,.css,.md,.txt">
+                    <p>Upload code for a full report<br><span>Optional: add line range below</span></p>
+                </label>
+            </div>
+
+            <div class="tab-content" id="paste">
+                <textarea name="code" placeholder="Paste raw code here..."></textarea>
+            </div>
+
+            <div class="tab-content" id="question">
+                <textarea name="text_question" placeholder="Describe the security concern or paste architecture notes for AI analysis..."></textarea>
+            </div>
+
+            <div class="line-range">
+                <label>
+                    Focus start line
+                    <input type="number" min="1" name="focus_start_line" placeholder="Optional">
+                </label>
+                <label>
+                    Focus end line
+                    <input type="number" min="1" name="focus_end_line" placeholder="Optional">
+                </label>
+            </div>
+
+            <button type="submit" class="scan-btn">Generate Report</button>
+        </form>
+
+        {% if result %}
+        <div class="form-message">{{ result }}</div>
+        {% endif %}
+    </div>
+</div>
+{% include "includes/ai_assistant.html" %}
+</body>
+</html>

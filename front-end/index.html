@@ -13,87 +13,49 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 
     <!-- JS -->
-    <script type="text/javascript" src="{% static 'scripts/upload.js' %}"></script>
-    <script src="{% static 'scripts/main.js' %}"></script>
+    <script type="text/javascript" src="{% static 'scripts/upload.js' %}" defer></script>
+    <script src="{% static 'scripts/main.js' %}" defer></script>
 </head>
-<body>
+<body class="theme-{{ user_theme|default:'dark' }}">
 
-<!-- ☰ Hamburger -->
-<div class="hamburger" id="hamburger">
-    <span></span>
-    <span></span>
-    <span></span>
-</div>
-
-<div class="sidebar">
-    <h2>AutoPen</h2>
-    <ul>
-        <li>Dashboard</li>
-        <li>Start Scan</li>
-        <li>Reports</li>
-        <li>Targets</li>
-        <li>Settings</li>
-        <li><a href="{% url 'vulnerability_list' %}">Vulnerabilities</a></li>
-    </ul>
-
-    <!-- 👇 Sidebar Footer (User + Logout) -->
-    <div class="sidebar-footer">
-        <span class="user-name">{{ request.user }}</span>
-
-        <form method="POST" action="{% url 'logout' %}">
-            {% csrf_token %}
-            <button type="submit" class="logout-btn">
-                Logout
-            </button>
-        </form>
-    </div>
-</div>
+{% include "includes/app_sidebar.html" %}
 
 <div class="main">
     <div class="header">
         <h1>Penetration Testing Dashboard</h1>
-        <p>User: {{ user_email|default:"Unknown User" }}</p>
+        <p>User: {{ user_name|default:user_email|default:"Unknown User" }}</p>
         <div class="status">System Status: Active</div>
-        <form method="POST" action="{% url 'logout' %}" style="display:inline;">
-            {% csrf_token %}
-            <button type="submit" style="
-        background-color:#ff4d4d;
-        color:white;
-        border:none;
-        padding:8px 12px;
-        border-radius:5px;
-        cursor:pointer;
-    ">
-                Logout
-            </button>
-        </form>
     </div>
 
     <div class="cards">
         <div class="card">
-            <h3>Total Scans</h3>
-            <p>{{scans|length}}</p>
+            <h3>Department Reports</h3>
+            <p>{{ total_scans }}</p>
         </div>
         <div class="card">
-            <h3>Critical Vulnerabilities</h3>
-            <p>12</p>
+            <h3>My Reports</h3>
+            <p>{{ my_count }}</p>
         </div>
         <div class="card">
-            <h3>Medium Vulnerabilities</h3>
-            <p>34</p>
+            <h3>Urgent Targets</h3>
+            <p>{{ urgent_count }}</p>
         </div>
         <div class="card">
-            <h3>Low Vulnerabilities</h3>
-            <p>56</p>
+            <h3>Department</h3>
+            <p>{{ user_department|default:"N/A" }}</p>
         </div>
     </div>
 
-    <div class="code-center">
+    <div class="code-center" id="scan-panel">
         <div class="code-box">
-            <h2>Upload Code for Analysis</h2>
+            <h2>Quick Scan</h2>
 
             <form method="POST" action="{% url 'submit_code' %}" enctype="multipart/form-data">
                 {% csrf_token %}
+
+                <div class="quick-report-name">
+                    <input type="text" name="report_title" maxlength="200" placeholder="Report name (optional)">
+                </div>
 
                 <div class="upload-tabs">
                     <button type="button" class="tab-btn active" data-tab="file">Upload File</button>
@@ -114,6 +76,7 @@
                 </div>
 
                 <button type="submit" class="scan-btn">Start Scan</button>
+                <a class="secondary-link" href="{% url 'start_scan' %}">Open advanced scan options</a>
             </form>
 
             {% if result %}
@@ -124,30 +87,34 @@
         </div>
     </div>
 
-    <div class="recent-scans">
-        <h3>Recent Scan Results</h3>
+    <div class="recent-scans" id="recent-scans">
+        <h3>Recent Department Reports</h3>
         <table>
             <thead>
             <tr>
                 <th>Target</th>
                 <th>Date</th>
+                <th>Owner</th>
                 <th>Risk Level</th>
+                <th>Priority</th>
                 <th>Status</th>
             </tr>
             </thead>
             <tbody>
             {% for scan in scans %}
             <tr onclick="window.location='{% url 'report_detail' scan.submission_id %}'" style="cursor:pointer;">
-                <td>{{ scan.submission_name|default:"Unnamed submission" }}</td>
+                <td>{% if scan.report_title %}{{ scan.report_title }}{% else %}{{ scan.submission_name|default:"Unnamed submission" }}{% endif %}</td>
                 <td>{{ scan.uploaded_at|date:"m/d/Y" }}</td>
+                <td>{{ scan.user.full_name|default:scan.user.email }}</td>
                 <td class="{% if scan.risk_level == 'Critical' %}critical{% elif scan.risk_level == 'High' %}high{% elif scan.risk_level == 'Medium' %}medium{% elif scan.risk_level == 'Low' %}low{% else %}info{% endif %}">
                     {{ scan.risk_level|default:"N/A" }}
                 </td>
+                <td class="priority-{{ scan.priority }}">{{ scan.get_priority_display }}</td>
                 <td>{{ scan.scan_status|default:"Unknown" }}</td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="4">No recent scans yet.</td>
+                <td colspan="6">No recent scans yet.</td>
             </tr>
             {% endfor %}
             </tbody>
@@ -155,5 +122,6 @@
     </div>
 </div>
 
+{% include "includes/ai_assistant.html" %}
 </body>
 </html>

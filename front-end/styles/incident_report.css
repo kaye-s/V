@@ -24,6 +24,14 @@ body.incident-report-body {
   line-height: 1.5;
 }
 
+body.incident-report-body.theme-purple {
+  background: #f7f0ff;
+}
+
+body.incident-report-body.theme-blue {
+  background: #eff6ff;
+}
+
 .ir-wrap {
   max-width: 900px;
   margin: 0 auto;
@@ -75,6 +83,12 @@ body.incident-report-body {
   border-radius: 8px;
   margin-bottom: 1.5rem;
   font-size: 0.9rem;
+}
+
+.ir-user-report-name {
+  margin-top: 0.5rem;
+  font-size: 0.95rem;
+  color: var(--muted);
 }
 
 .ir-header {
@@ -201,4 +215,12 @@ body.incident-report-body {
   border-bottom: 1px solid var(--border);
   padding-bottom: 0.35rem;
   min-height: 2rem;
+}
+
+/* Sidebar layout: incident report stays light; `.main--report` stretches full width inside flex body */
+body.incident-report-body .main.main--report {
+  width: 100%;
+  flex: 1;
+  padding-top: 3rem;
+  background: transparent;
 }

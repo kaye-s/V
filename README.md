@@ -33,6 +33,9 @@ Create a `.env` in the project root (or use your `python-decouple` loading patte
 | `DB_HOST` | Hostname |
 | `DB_PORT` | Port (optional, default `5432`) |
 | `OPENAI_API_KEY` | OpenAI API key for analysis and report content |
+| `MANAGER_SETUP_CODE` | Registration code used to bootstrap manager accounts |
+| `OPENAI_REPORT_MODEL` | Default model for report generation |
+| `OPENAI_MODEL_CHOICES` | Comma-separated model list shown in Settings |
 
 ## System dependencies (scanners)
 
