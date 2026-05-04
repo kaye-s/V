@@ -39,6 +39,8 @@ class User(models.Model):
     role = models.CharField(max_length=16, choices=ROLE_CHOICES, default=ROLE_MEMBER)
     account_status = models.CharField(max_length=16, choices=STATUS_CHOICES, default=STATUS_PENDING)
     created_at = models.DateTimeField(auto_now_add=True)
+    total_llm_prompt_tokens = models.BigIntegerField(default=0)
+    total_llm_completion_tokens = models.BigIntegerField(default=0)
 
     def __str__(self):
         return self.email

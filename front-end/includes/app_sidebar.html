@@ -38,7 +38,7 @@
     </nav>
 
     <div class="sidebar-footer">
-        <span class="user-name" title="Signed-in user">{{ user_name|default:user_email|default:"—" }}</span>
+        <a href="{% url 'personal_info' %}" class="user-name sidebar-profile-link{% if u == 'personal_info' %} active{% endif %}" title="Personal information">{{ user_name|default:user_email|default:"—" }}</a>
         <form method="POST" action="{% url 'logout' %}">
             {% csrf_token %}
             <button type="submit" class="logout-btn">

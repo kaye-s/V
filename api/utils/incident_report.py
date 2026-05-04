@@ -7,8 +7,24 @@ import json
 import re
 import uuid
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from django.utils import timezone
+
+_CHICAGO_TZ = ZoneInfo("America/Chicago")
+
+
+def format_report_datetime_chicago(dt) -> str:
+    """
+    Format a datetime for incident reports in America/Chicago.
+    Naive datetimes are treated as UTC (typical when reading legacy rows).
+    """
+    if dt is None:
+        return ""
+    if timezone.is_naive(dt):
+        dt = timezone.make_aware(dt, timezone=ZoneInfo("UTC"))
+    local = dt.astimezone(_CHICAGO_TZ)
+    return local.strftime("%d %B %Y, %H:%M %Z").strip() or local.isoformat()
 
 
 def parse_llm_json(raw: str) -> dict[str, Any]:
@@ -97,7 +113,14 @@ def merge_incident_report_context(
     if user is not None and getattr(user, "is_authenticated", False):
         reported_by = user.get_username() or _as_str(getattr(user, "email", ""), "Unknown")
     else:
-        reported_by = "Unknown"
+        # Custom session auth: views may override with submitter from CodeSubmission.
+        session = getattr(request, "session", None)
+        if session is not None:
+            name = (session.get("user_name") or "").strip()
+            email = (session.get("user_email") or "").strip()
+            reported_by = name or email or "Unknown"
+        else:
+            reported_by = "Unknown"
 
     cvss = _normalize_cvss(ai)
     impact = _as_str_list(ai.get("impact"))

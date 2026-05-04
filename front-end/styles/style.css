@@ -112,6 +112,78 @@ body.loaded {
     font-weight: 500;
 }
 
+a.sidebar-profile-link {
+    text-decoration: none;
+    max-width: 55%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+a.sidebar-profile-link.active {
+    color: #f5d0fe;
+}
+
+a.sidebar-profile-link:hover {
+    text-decoration: underline;
+    color: #e9d5ff;
+}
+
+/* Personal information page */
+.personal-info-page .personal-section {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(168, 85, 247, 0.2);
+}
+
+.personal-info-page .personal-section:last-child {
+    border-bottom: none;
+}
+
+.personal-section-title {
+    font-size: 1.1rem;
+    margin: 0 0 0.75rem;
+    color: #e9d5ff;
+}
+
+.personal-form label {
+    display: block;
+    margin-bottom: 0.75rem;
+}
+
+.personal-form input[type="text"],
+.personal-form input[type="password"] {
+    display: block;
+    width: 100%;
+    max-width: 420px;
+    margin-top: 0.35rem;
+    padding: 0.5rem 0.65rem;
+    border-radius: 6px;
+    border: 1px solid rgba(148, 163, 184, 0.4);
+    background: rgba(15, 23, 42, 0.6);
+    color: #f1f5f9;
+}
+
+.personal-token-table {
+    width: 100%;
+    max-width: 480px;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+}
+
+.personal-token-table th,
+.personal-token-table td {
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.personal-token-table th {
+    width: 55%;
+    font-weight: 600;
+    background: rgba(30, 41, 59, 0.5);
+}
+
 .logout-btn {
     background-color: #ff4d4d;
     color: white;

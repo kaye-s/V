@@ -22,9 +22,11 @@ from .services.ai_service import ask_ai
 from .services.incident_report_ai import generate_incident_report_ai_payload
 from .utils.incident_report import (
     DISCLAIMER_TEXT,
+    format_report_datetime_chicago,
     merge_incident_report_context,
     parse_llm_json,
 )
+from .utils.openai_usage import record_openai_usage_for_user
 from .utils.prescan import run_semgrep, run_gitleaks
 
 from .models import CodeSubmission, File, Threat, CWE, User, DepartmentJoinRequest, ReportComment, UserSetting
@@ -226,7 +228,10 @@ def _run_incident_scan(
             },
         }
 
-        raw_json = generate_incident_report_ai_payload(passage, model=user_settings.ai_model)
+        raw_json, llm_usage = generate_incident_report_ai_payload(passage, model=user_settings.ai_model)
+
+        record_openai_usage_for_user(user_id, llm_usage)
+
         ai_data = parse_llm_json(raw_json)
 
         parse_error = None
@@ -304,10 +309,11 @@ def assistant_chat_view(request):
         user = User.objects.get(user_id=request.session["user_id"])
         user_settings = _get_or_create_settings(user)
         model = user_settings.ai_model or None
-        reply = ask_ai(user_text, model=model)
+        reply, usage = ask_ai(user_text, model=model)
+        record_openai_usage_for_user(request.session.get("user_id"), usage)
     except Exception as exc:
         return JsonResponse({"error": str(exc)}, status=502)
-    return JsonResponse({"reply": reply})
+    return JsonResponse({"reply": reply or ""})
 
 def scan_view(request):
     target_path = "/path/to/code"  # you could get this from request.POST
@@ -679,6 +685,60 @@ def settings_view(request):
             "ai_models": _available_ai_models(),
         },
     )
+
+
+def personal_info_view(request):
+    """Display name, password change, and accumulated OpenAI token usage."""
+    current_user, auth_redirect = _active_user_or_redirect(request)
+    if auth_redirect:
+        return auth_redirect
+
+    if request.method == "POST":
+        action = request.POST.get("action", "").strip()
+        if action == "profile":
+            full_name = request.POST.get("full_name", "").strip()
+            if not full_name:
+                messages.error(request, "Display name cannot be empty.")
+            elif len(full_name) > 120:
+                messages.error(request, "Display name is too long (max 120 characters).")
+            else:
+                current_user.full_name = full_name
+                current_user.save(update_fields=["full_name"])
+                request.session["user_name"] = full_name
+                messages.success(request, "Display name updated.")
+            return redirect("personal_info")
+        if action == "password":
+            current_pw = request.POST.get("current_password", "")
+            new_pw = request.POST.get("new_password", "")
+            confirm_pw = request.POST.get("confirm_password", "")
+            if not check_password(current_pw, current_user.password_hash):
+                messages.error(request, "Current password is incorrect.")
+            elif len(new_pw) < 8:
+                messages.error(request, "New password must be at least 8 characters.")
+            elif new_pw != confirm_pw:
+                messages.error(request, "New password and confirmation do not match.")
+            else:
+                current_user.password_hash = make_password(new_pw)
+                current_user.save(update_fields=["password_hash"])
+                messages.success(request, "Password changed.")
+            return redirect("personal_info")
+        return redirect("personal_info")
+
+    db_user = User.objects.get(user_id=current_user.user_id)
+    p = int(db_user.total_llm_prompt_tokens or 0)
+    c = int(db_user.total_llm_completion_tokens or 0)
+    return render(
+        request,
+        "personal_info.html",
+        {
+            "profile_user": db_user,
+            "llm_prompt_tokens": p,
+            "llm_completion_tokens": c,
+            "llm_total_tokens": p + c,
+        },
+    )
+
+
 # -----------------
 # User Registration
 # -----------------
@@ -744,7 +804,7 @@ def report_detail_view(request, submission_id):
         return redirect("/login/")
 
     submission = get_object_or_404(
-        CodeSubmission,
+        CodeSubmission.objects.select_related("user"),
         submission_id=submission_id,
         user__department=current_user.department
     )
@@ -756,6 +816,12 @@ def report_detail_view(request, submission_id):
         ai=ai_data,
         parse_error=None,
     )
+
+    submitter = submission.user
+    ctx["reported_by"] = (submitter.full_name or "").strip() or submitter.email or "Unknown"
+    ctx["report_datetime"] = format_report_datetime_chicago(submission.uploaded_at)
+    if submission.incident_id:
+        ctx["incident_id"] = submission.incident_id
 
     ctx["disclaimer"] = DISCLAIMER_TEXT
     ctx["submission"] = submission

@@ -10,4 +10,6 @@ def ask_ai(user_text, model=None):
         messages=[{"role": "user", "content": str(user_text)}],
     )
 
-    return resp.choices[0].message.content
+    text = resp.choices[0].message.content
+    usage = getattr(resp, "usage", None)
+    return text, usage

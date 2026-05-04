@@ -18,6 +18,7 @@ urlpatterns = [
     path('reports/', views.reports_view, name='reports'),
     path('targets/', views.targets_view, name='targets'),
     path('settings/', views.settings_view, name='settings'),
+    path("personal/", views.personal_info_view, name="personal_info"),
 
     # Check status / get results of a submission
     path('submission/<int:submission_id>/', SubmissionStatusView.as_view(), name='submission_status'),
