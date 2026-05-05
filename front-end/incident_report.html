@@ -5,10 +5,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Incident Report — AutoPen</title>
+  <link rel="stylesheet" href="{% static 'styles/style.css' %}">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{% static 'styles/incident_report.css' %}">
+  <script src="{% static 'scripts/main.js' %}" defer></script>
 </head>
-<body class="incident-report-body">
+<body class="incident-report-body theme-{{ user_theme|default:'dark' }}">
 
+{% include "includes/app_sidebar.html" %}
+
+<div class="main main--report">
 <div class="ir-wrap">
   <div class="ir-actions">
     <a class="ir-back" href="{% url 'dashboard' %}">← Back to dashboard</a>
@@ -21,10 +27,19 @@
   <div class="ir-parse-error">{{ parse_error }}</div>
   {% endif %}
 
+  {% if messages %}
+  {% for message in messages %}
+  <div class="ir-parse-error" role="status">{{ message }}</div>
+  {% endfor %}
+  {% endif %}
+
   <header class="ir-header">
     <p class="ir-kicker">{{ report_kicker }}</p>
     <h1 class="ir-title">{{ report_title }}</h1>
     <p class="ir-subtitle">{{ report_subtitle }}</p>
+    {% if submission.report_title %}
+    <p class="ir-user-report-name">Your report name: {{ submission.report_title }}</p>
+    {% endif %}
   </header>
 
   <h2 class="ir-section-title">Incident overview</h2>
@@ -119,6 +134,7 @@
     <div class="ir-sign-row"><strong>Date:</strong></div>
   </div>
 </div>
+</div>
 
 <script>
 (function () {
@@ -135,36 +151,41 @@
 
   btn.addEventListener("click", async function () {
     let inlineCss = "";
-    const link = document.querySelector('link[rel="stylesheet"]');
-    if (link && link.href) {
+    const irLink = document.querySelector('link[href*="incident_report"]');
+    const linkHref = irLink && irLink.href ? irLink.href : "";
+    if (linkHref) {
       try {
-        const res = await fetch(link.href, { credentials: "same-origin" });
+        const res = await fetch(linkHref, { credentials: "same-origin" });
         if (res.ok) {
           inlineCss = "<style>\n" + (await res.text()) + "\n</style>";
         }
       } catch (_) {
-        /* offline / CORS: file will still download without inlined CSS */
       }
     }
 
-    const bodyClone = document.body.cloneNode(true);
-    bodyClone.querySelectorAll("script").forEach(function (el) {
-      el.remove();
-    });
-    const cloneBtn = bodyClone.querySelector("#ir-download-html");
-    if (cloneBtn) {
-      const actions = cloneBtn.closest(".ir-actions");
-      if (actions) {
-        const backOnly = document.createElement("div");
-        backOnly.className = "ir-actions";
-        const back = actions.querySelector(".ir-back");
-        if (back) {
-          backOnly.appendChild(back.cloneNode(true));
+    var irWrap = document.querySelector(".ir-wrap");
+    var innerMarkup = "";
+    if (irWrap) {
+      var clone = irWrap.cloneNode(true);
+      clone.querySelectorAll("script").forEach(function (el) {
+        el.remove();
+      });
+      var dlBtn = clone.querySelector("#ir-download-html");
+      if (dlBtn) {
+        var actions = dlBtn.closest(".ir-actions");
+        if (actions) {
+          var backOnly = document.createElement("div");
+          backOnly.className = "ir-actions";
+          var backEl = actions.querySelector(".ir-back");
+          if (backEl) {
+            backOnly.appendChild(backEl.cloneNode(true));
+          }
+          actions.replaceWith(backOnly);
         }
-        actions.replaceWith(backOnly);
-      } else {
-        cloneBtn.remove();
       }
+      innerMarkup = clone.innerHTML;
+    } else {
+      innerMarkup = "";
     }
 
     const title = document.title || "Incident Report";
@@ -182,7 +203,7 @@
       inlineCss +
       "\n</head>\n" +
       '<body class="incident-report-body">\n' +
-      bodyClone.innerHTML +
+      innerMarkup +
       "\n</body>\n</html>";
 
     const blob = new Blob([doc], { type: "text/html;charset=utf-8" });
@@ -199,5 +220,6 @@
 })();
 </script>
 
+{% include "includes/ai_assistant.html" %}
 </body>
 </html>

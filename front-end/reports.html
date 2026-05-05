@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Reports — AutoPen</title>
+    <link rel="stylesheet" href="{% static 'styles/style.css' %}">
+    <script src="{% static 'scripts/main.js' %}" defer></script>
+</head>
+<body class="theme-{{ user_theme|default:'dark' }}">
+{% include "includes/app_sidebar.html" %}
+
+<div class="main">
+    <div class="header">
+        <h1>My Reports</h1>
+        <div class="status">Your scans only · newest first</div>
+    </div>
+
+    <div class="recent-scans reports-table-wrap">
+        <table class="reports-table">
+            <thead>
+            <tr>
+                <th>Report name</th>
+                <th>Time</th>
+                <th>Risk</th>
+                <th>Urgency</th>
+                <th>Status</th>
+                <th>Type</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for report in reports %}
+            <tr class="reports-row-main priority-border-{{ report.priority }}">
+                <td class="reports-name-cell">
+                    <a class="reports-title-link" href="{% url 'report_detail' report.submission_id %}">
+                        {% if report.report_title %}{{ report.report_title }}{% else %}{{ report.submission_name|default:"Untitled" }}{% endif %}
+                    </a>
+                    <form method="POST" class="reports-rename-form" onclick="event.stopPropagation();">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="rename">
+                        <input type="hidden" name="submission_id" value="{{ report.submission_id }}">
+                        <input type="text" name="report_title" value="{{ report.report_title }}" maxlength="200" placeholder="Name this report…">
+                        <button type="submit" class="scan-btn compact-btn">Save name</button>
+                    </form>
+                </td>
+                <td>{{ report.uploaded_at|date:"m/d/Y H:i" }}</td>
+                <td class="{% if report.risk_level == 'Critical' %}critical{% elif report.risk_level == 'High' %}high{% elif report.risk_level == 'Medium' %}medium{% elif report.risk_level == 'Low' %}low{% else %}info{% endif %}">
+                    {{ report.risk_level|default:"—" }}
+                </td>
+                <td>
+                    <form method="POST" class="reports-inline-priority" onclick="event.stopPropagation();">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="priority">
+                        <input type="hidden" name="submission_id" value="{{ report.submission_id }}">
+                        <select name="priority">
+                            {% for value, label in priority_choices %}
+                            <option value="{{ value }}" {% if report.priority == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="scan-btn compact-btn">Set</button>
+                    </form>
+                </td>
+                <td>{{ report.scan_status|default:"—" }}</td>
+                <td>{{ report.get_scan_input_type_display }}</td>
+                <td>
+                    <a class="secondary-link" href="{% url 'report_detail' report.submission_id %}">Open</a>
+                </td>
+            </tr>
+            <tr class="reports-row-comments">
+                <td colspan="7">
+                    <div class="reports-comments-thread">
+                        {% for comment in report.comments.all %}
+                        <p class="comment-line"><strong>{{ comment.user.full_name|default:comment.user.email }}:</strong> {{ comment.comment }}</p>
+                        {% empty %}
+                        <p class="muted">No comments yet.</p>
+                        {% endfor %}
+                    </div>
+                    <form method="POST" class="reports-comment-bar">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="comment">
+                        <input type="hidden" name="submission_id" value="{{ report.submission_id }}">
+                        <input type="text" name="comment" class="reports-comment-input" placeholder="Add a note on this report…" autocomplete="off" required>
+                        <button type="submit" class="scan-btn compact-btn">Post</button>
+                    </form>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="muted">No reports yet. Start a scan from Dashboard or Start Scan.</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% include "includes/ai_assistant.html" %}
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Targets — AutoPen</title>
+    <link rel="stylesheet" href="{% static 'styles/style.css' %}">
+    <script src="{% static 'scripts/main.js' %}" defer></script>
+</head>
+<body class="theme-{{ user_theme|default:'dark' }}">
+{% include "includes/app_sidebar.html" %}
+
+<div class="main">
+    <div class="header">
+        <h1>Targets</h1>
+        <div class="status">Department queue · urgency first, then newest</div>
+    </div>
+
+    <div class="recent-scans reports-table-wrap">
+        <table class="reports-table targets-table">
+            <thead>
+            <tr>
+                <th>Report name</th>
+                <th>Time</th>
+                <th>Owner</th>
+                <th>Risk</th>
+                <th>Urgency</th>
+                <th>Status</th>
+                <th>Type</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for report in reports %}
+            <tr class="reports-row-main priority-border-{{ report.priority }}">
+                <td class="reports-name-cell">
+                    <a class="reports-title-link" href="{% url 'report_detail' report.submission_id %}">
+                        {% if report.report_title %}{{ report.report_title }}{% else %}{{ report.submission_name|default:"Untitled" }}{% endif %}
+                    </a>
+                </td>
+                <td>{{ report.uploaded_at|date:"m/d/Y H:i" }}</td>
+                <td>{{ report.user.full_name|default:report.user.email }}</td>
+                <td class="{% if report.risk_level == 'Critical' %}critical{% elif report.risk_level == 'High' %}high{% elif report.risk_level == 'Medium' %}medium{% elif report.risk_level == 'Low' %}low{% else %}info{% endif %}">
+                    {{ report.risk_level|default:"—" }}
+                </td>
+                <td>
+                    {% if report.user_id == current_user.user_id or current_user.role == "manager" %}
+                    <form method="POST" class="reports-inline-priority" onclick="event.stopPropagation();">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="priority">
+                        <input type="hidden" name="submission_id" value="{{ report.submission_id }}">
+                        <select name="priority">
+                            {% for value, label in priority_choices %}
+                            <option value="{{ value }}" {% if report.priority == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="scan-btn compact-btn">Set</button>
+                    </form>
+                    {% else %}
+                    <span class="priority-pill priority-{{ report.priority }}">{{ report.get_priority_display }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ report.scan_status|default:"—" }}</td>
+                <td>{{ report.get_scan_input_type_display }}</td>
+                <td>
+                    <a class="secondary-link" href="{% url 'report_detail' report.submission_id %}">Open</a>
+                </td>
+            </tr>
+            <tr class="targets-board-row">
+                <td colspan="8">
+                    <div class="targets-board">
+                        <div class="targets-board-header">Discussion</div>
+                        <div class="targets-board-thread">
+                            {% for comment in report.comments.all %}
+                            <article class="targets-board-post">
+                                <div class="targets-board-post-meta">
+                                    <span class="targets-board-author">{{ comment.user.full_name|default:comment.user.email }}</span>
+                                    <time datetime="{{ comment.created_at|date:'c' }}">{{ comment.created_at|date:"m/d/Y H:i" }}</time>
+                                </div>
+                                <div class="targets-board-body">{{ comment.comment }}</div>
+                            </article>
+                            {% empty %}
+                            <p class="targets-board-empty muted">No messages yet — be the first to leave a note.</p>
+                            {% endfor %}
+                        </div>
+                        <form method="POST" class="targets-board-compose" onclick="event.stopPropagation();">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="comment">
+                            <input type="hidden" name="submission_id" value="{{ report.submission_id }}">
+                            <label class="sr-only" for="target-comment-{{ report.submission_id }}">Message</label>
+                            <textarea id="target-comment-{{ report.submission_id }}" name="comment" class="targets-board-textarea" rows="3" maxlength="8000" placeholder="Write a message for the team…" required></textarea>
+                            <div class="targets-board-actions">
+                                <button type="submit" class="scan-btn compact-btn">Post message</button>
+                            </div>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8" class="muted">No department reports yet.</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% include "includes/ai_assistant.html" %}
+</body>
+</html>

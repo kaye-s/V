@@ -1,13 +1,29 @@
-from django.test import TestCase
+from datetime import datetime
+
+from django.test import SimpleTestCase
 
 # Create your tests here.
 from rest_framework.test import APITestCase
 from django.contrib.auth import get_user_model
 from rest_framework import status
+from zoneinfo import ZoneInfo
+
 from .models import CodeSubmission, File, Threat
 from .tasks import run_analysis_sync
+from .utils.incident_report import format_report_datetime_chicago
 
 User = get_user_model()
+
+
+class ReportDatetimeChicagoTests(SimpleTestCase):
+    def test_formats_utc_in_chicago(self):
+        dt = datetime(2026, 1, 15, 18, 0, tzinfo=ZoneInfo("UTC"))
+        s = format_report_datetime_chicago(dt)
+        self.assertIn("January", s)
+        self.assertIn("2026", s)
+        self.assertIn("15", s)
+        self.assertIn("12:00", s)
+
 
 class CodeSubmissionTests(APITestCase):
 

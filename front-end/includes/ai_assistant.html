@@ -1,0 +1,180 @@
+{% load static %}
+{# FAB dock + panel are siblings; both appended to body so nothing clips fixed panel. Visibility via inline display !important (survives CSS cache issues). #}
+<div id="ai-assistant" class="ai-assistant-dock" aria-live="polite">
+  <button type="button" class="ai-assistant-fab" id="ai-assistant-toggle" aria-expanded="false" aria-controls="ai-assistant-panel" title="AI assistant">
+    <img src="{% static 'images/ai-assistant.png' %}" alt="" width="48" height="48" loading="lazy">
+  </button>
+</div>
+<div class="ai-assistant-panel" id="ai-assistant-panel" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="ai-assistant-panel-title" style="display:none !important;">
+  <div class="ai-assistant-panel-header">
+    <span id="ai-assistant-panel-title">AI assistant</span>
+    <button type="button" class="ai-assistant-close" id="ai-assistant-close" aria-label="Close">&times;</button>
+  </div>
+  <div class="ai-assistant-messages" id="ai-assistant-messages"></div>
+  <form class="ai-assistant-form" id="ai-assistant-form" autocomplete="off">
+    {% csrf_token %}
+    <input type="text" id="ai-assistant-input" name="message" placeholder="Ask a question…" maxlength="4000" required>
+    <button type="submit" class="ai-assistant-send">Send</button>
+  </form>
+</div>
+<script>
+(function () {
+  const root = document.getElementById("ai-assistant");
+  const panel = document.getElementById("ai-assistant-panel");
+  const toggle = document.getElementById("ai-assistant-toggle");
+  const closeBtn = document.getElementById("ai-assistant-close");
+  const form = document.getElementById("ai-assistant-form");
+  const input = document.getElementById("ai-assistant-input");
+  const messages = document.getElementById("ai-assistant-messages");
+  const chatUrl = "{% url 'assistant_chat' %}";
+
+  if (!root || !panel || !toggle) return;
+
+  function assistantContains(node) {
+    if (!node) return false;
+    return root.contains(node) || panel.contains(node);
+  }
+
+  if (root.parentNode !== document.body) {
+    document.body.appendChild(root);
+  }
+  if (panel.parentNode !== document.body) {
+    document.body.appendChild(panel);
+  }
+
+  root.style.setProperty("position", "fixed", "important");
+  root.style.setProperty("right", "calc(16px + env(safe-area-inset-right, 0px))", "important");
+  root.style.setProperty("bottom", "calc(16px + env(safe-area-inset-bottom, 0px))", "important");
+  root.style.setProperty("top", "auto", "important");
+  root.style.setProperty("left", "auto", "important");
+  root.style.setProperty("margin", "0", "important");
+  root.style.setProperty("z-index", "2147483000", "important");
+
+  panel.style.setProperty("position", "fixed", "important");
+  panel.style.setProperty("right", "calc(16px + env(safe-area-inset-right, 0px))", "important");
+  panel.style.setProperty("bottom", "calc(80px + env(safe-area-inset-bottom, 0px))", "important");
+  panel.style.setProperty("top", "auto", "important");
+  panel.style.setProperty("left", "auto", "important");
+  panel.style.setProperty("z-index", "2147483001", "important");
+  panel.style.setProperty("display", "none", "important");
+
+  function isPanelOpen() {
+    return panel.classList.contains("ai-assistant-panel--open");
+  }
+
+  function setOpen(open) {
+    var wantOpen = !!open;
+    panel.classList.toggle("ai-assistant-panel--open", wantOpen);
+    panel.setAttribute("aria-hidden", wantOpen ? "false" : "true");
+    toggle.setAttribute("aria-expanded", wantOpen ? "true" : "false");
+    if (wantOpen) {
+      panel.style.setProperty("display", "flex", "important");
+      panel.style.setProperty("flex-direction", "column", "important");
+    } else {
+      panel.style.setProperty("display", "none", "important");
+    }
+    if (wantOpen && input) {
+      window.setTimeout(function () {
+        try {
+          input.focus();
+        } catch (e) {}
+      }, 0);
+    }
+  }
+
+  setOpen(false);
+
+  toggle.addEventListener("click", function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    setOpen(!isPanelOpen());
+  });
+
+  panel.addEventListener("click", function (e) {
+    if (e.target && e.target.closest && e.target.closest("#ai-assistant-close")) {
+      e.preventDefault();
+      e.stopPropagation();
+      setOpen(false);
+    }
+  });
+
+  if (closeBtn) {
+    closeBtn.addEventListener("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      setOpen(false);
+    });
+  }
+
+  document.addEventListener(
+    "mousedown",
+    function (e) {
+      if (!isPanelOpen()) return;
+      if (assistantContains(e.target)) return;
+      setOpen(false);
+    },
+    true
+  );
+
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Escape") return;
+    if (!isPanelOpen()) return;
+    setOpen(false);
+  });
+
+  function getCookie(name) {
+    const value = "; " + document.cookie;
+    const parts = value.split("; " + name + "=");
+    if (parts.length === 2) return parts.pop().split(";").shift();
+    return "";
+  }
+
+  function appendBubble(role, text) {
+    if (!messages) return;
+    const row = document.createElement("div");
+    row.className = "ai-assistant-msg ai-assistant-msg--" + role;
+    const bubble = document.createElement("div");
+    bubble.className = "ai-assistant-bubble";
+    bubble.textContent = text;
+    row.appendChild(bubble);
+    messages.appendChild(row);
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  if (form) {
+    form.addEventListener("submit", async function (ev) {
+      ev.preventDefault();
+      const text = (input && input.value ? input.value : "").trim();
+      if (!text) return;
+      input.value = "";
+      appendBubble("user", text);
+      appendBubble("assistant", "…");
+      const pending = messages ? messages.lastElementChild : null;
+
+      try {
+        const res = await fetch(chatUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCookie("csrftoken") || form.querySelector("[name=csrfmiddlewaretoken]").value,
+          },
+          credentials: "same-origin",
+          body: JSON.stringify({ message: text }),
+        });
+        const data = await res.json().catch(function () {
+          return {};
+        });
+        if (pending) pending.remove();
+        if (!res.ok) {
+          appendBubble("assistant", data.error || "Error (" + res.status + ")");
+          return;
+        }
+        appendBubble("assistant", data.reply || "(empty response)");
+      } catch (err) {
+        if (pending) pending.remove();
+        appendBubble("assistant", "Network error. Try again.");
+      }
+    });
+  }
+})();
+</script>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal information — AutoPen</title>
+    <link rel="stylesheet" href="{% static 'styles/style.css' %}">
+    <script src="{% static 'scripts/main.js' %}" defer></script>
+</head>
+<body class="theme-{{ user_theme|default:'dark' }}">
+{% include "includes/app_sidebar.html" %}
+
+<div class="main">
+    <div class="header">
+        <h1>Personal information</h1>
+        <div class="status">Account &amp; usage</div>
+    </div>
+
+    <div class="code-box personal-info-page">
+        {% if messages %}
+        {% for message in messages %}
+        <div class="form-message">{{ message }}</div>
+        {% endfor %}
+        {% endif %}
+
+        <section class="personal-section">
+            <h2 class="personal-section-title">Account</h2>
+            <p class="muted"><strong>Email</strong> (sign-in): {{ profile_user.email }}</p>
+            <form method="POST" class="personal-form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="profile">
+                <label>
+                    Display name
+                    <input type="text" name="full_name" maxlength="120" value="{{ profile_user.full_name }}" required>
+                </label>
+                <button class="scan-btn" type="submit">Save display name</button>
+            </form>
+        </section>
+
+        <section class="personal-section">
+            <h2 class="personal-section-title">Change password</h2>
+            <form method="POST" class="personal-form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="password">
+                <label>
+                    Current password
+                    <input type="password" name="current_password" autocomplete="current-password" required>
+                </label>
+                <label>
+                    New password (min 8 characters)
+                    <input type="password" name="new_password" autocomplete="new-password" required minlength="8">
+                </label>
+                <label>
+                    Confirm new password
+                    <input type="password" name="confirm_password" autocomplete="new-password" required minlength="8">
+                </label>
+                <button class="scan-btn" type="submit">Update password</button>
+            </form>
+        </section>
+
+        <section class="personal-section">
+            <h2 class="personal-section-title">OpenAI token usage (this account)</h2>
+            <p class="muted">Totals accumulate from report scans and the in-app assistant when the API returns usage data. Older activity may show as zero.</p>
+            <table class="personal-token-table">
+                <tbody>
+                    <tr><th scope="row">Prompt tokens (cumulative)</th><td>{{ llm_prompt_tokens }}</td></tr>
+                    <tr><th scope="row">Completion tokens (cumulative)</th><td>{{ llm_completion_tokens }}</td></tr>
+                    <tr><th scope="row">Total (prompt + completion)</th><td><strong>{{ llm_total_tokens }}</strong></td></tr>
+                </tbody>
+            </table>
+        </section>
+    </div>
+</div>
+{% include "includes/ai_assistant.html" %}
+</body>
+</html>

@@ -4,10 +4,12 @@ from decouple import config
 
 client = OpenAI(api_key=config("OPENAI_API_KEY"))
 
-def ask_ai(user_text):
+def ask_ai(user_text, model=None):
     resp = client.chat.completions.create(
-        model="gpt-4.1-mini",
+        model=model or "gpt-4.1-mini",
         messages=[{"role": "user", "content": str(user_text)}],
     )
 
-    return resp.choices[0].message.content
+    text = resp.choices[0].message.content
+    usage = getattr(resp, "usage", None)
+    return text, usage

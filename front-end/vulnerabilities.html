@@ -1,44 +1,18 @@
 <!DOCTYPE html>
 {% load static %}
-<html>
+<html lang="en">
 <head>
-    <title>Vulnerabilities</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vulnerabilities — AutoPen</title>
     <link rel="stylesheet" href="{% static 'styles/style.css' %}">
-    <script src="{% static 'scripts/main.js' %}"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="{% static 'scripts/main.js' %}" defer></script>
 </head>
 
-<body>
+<body class="theme-{{ user_theme|default:'dark' }}">
 
-<!-- ☰ Hamburger -->
-<div class="hamburger" id="hamburger">
-    <span></span>
-    <span></span>
-    <span></span>
-</div>
-
-<div class="sidebar">
-    <h2>AutoPen</h2>
-    <ul>
-        <li><a href="{% url 'dashboard' %}">Dashboard</a></li>
-        <li>Start Scan</li>
-        <li>Reports</li>
-        <li>Targets</li>
-        <li>Settings</li>
-        <li><a href="{% url 'vulnerability_list' %}">Vulnerabilities</a></li>
-    </ul>
-
-    <!-- 👇 Sidebar Footer (User + Logout) -->
-    <div class="sidebar-footer">
-        <span class="user-name">{{ request.user }}</span>
-
-        <form method="POST" action="{% url 'logout' %}">
-            {% csrf_token %}
-            <button type="submit" class="logout-btn">
-                Logout
-            </button>
-        </form>
-    </div>
-</div>
+{% include "includes/app_sidebar.html" %}
 
 <!-- ================= MAIN CONTENT ================= -->
 <div class="main">
@@ -120,5 +94,6 @@
 
 </div>
 
+{% include "includes/ai_assistant.html" %}
 </body>
 </html>

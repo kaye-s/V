@@ -46,13 +46,15 @@ Passage (JSON):
     return schema.strip() + "\n" + passage_json
 
 
-def generate_incident_report_ai_payload(passage: dict[str, Any]) -> str:
+def generate_incident_report_ai_payload(
+    passage: dict[str, Any], model: str | None = None
+) -> tuple[str, Any]:
     """
-    Calls the chat completion API and returns raw message content (expected JSON object).
+    Calls the chat completion API and returns (message content, usage or None).
     """
     user_prompt = build_incident_report_user_prompt(passage)
     kwargs: dict[str, Any] = {
-        "model": "gpt-5.4-nano",
+        "model": model or config("OPENAI_REPORT_MODEL", default="gpt-4.1-mini"),
         "messages": [
             {"role": "system", "content": _SYSTEM},
             {"role": "user", "content": user_prompt},
@@ -66,4 +68,6 @@ def generate_incident_report_ai_payload(passage: dict[str, Any]) -> str:
         kwargs.pop("response_format", None)
         resp = client.chat.completions.create(**kwargs)
 
-    return (resp.choices[0].message.content or "").strip()
+    content = (resp.choices[0].message.content or "").strip()
+    usage = getattr(resp, "usage", None)
+    return content, usage
