@@ -8,6 +8,8 @@ class User(models.Model):
     email = models.CharField(max_length=255, unique=True)
     password_hash = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
+    account_status = models.CharField(max_length=50, default='active')
+
 
     def __str__(self):
         return self.email
@@ -23,12 +25,22 @@ class CodeSubmission(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='submissions')
     submission_name = models.CharField(max_length=255, null=True, blank=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
+
     overall_risk_score = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     simplified_summary = models.TextField(null=True, blank=True)
     detailed_summary = models.TextField(null=True, blank=True)
 
+    scan_status = models.CharField(max_length=50, null=True, blank=True)
+    risk_level = models.CharField(max_length=20, null=True, blank=True)
+    incident_id = models.CharField(max_length=100, null=True, blank=True)
+    report_html_path = models.TextField(null=True, blank=True)
+    report_data = models.JSONField(null=True, blank=True)
+
     def __str__(self):
         return f"{self.submission_name} by {self.user.email}"
+
+    class Meta:
+        db_table = "code_submissions"
 
 # -------------------
 # Files
@@ -43,9 +55,10 @@ class File(models.Model):
     def __str__(self):
         return self.file_name
 
-# -------------------
-# Threats
-# -------------------
+    class Meta:
+        db_table = "files"  # ← add this
+
+
 class Threat(models.Model):
     SEVERITY_CHOICES = [
         ('Low', 'Low'),
@@ -66,6 +79,9 @@ class Threat(models.Model):
 
     def __str__(self):
         return f"{self.title} ({self.severity_level})"
+
+    class Meta:
+        db_table = "threats"  # ← add this
 
 # -------------------
 # CWE Reference

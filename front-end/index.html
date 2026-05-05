@@ -26,15 +26,15 @@
 </div>
 
 <div class="sidebar">
-    <div class="sidebar-header">
-        <h2>AutoPen</h2>
-    </div>
-        <ul>
-            <li class="active"><a href="{% url 'dashboard' %}">Dashboard</a></li>
-            <li><a href="{% url 'reports' %}">Reports</a></li>
-            <li><a href="{% url 'settings' %}">Settings</a></li>
-            <li><a href="{% url 'vulnerability_list' %}">Vulnerabilities</a></li>
-        </ul>
+    <h2>AutoPen</h2>
+    <ul>
+        <li>Dashboard</li>
+        <li>Start Scan</li>
+        <li>Reports</li>
+        <li>Targets</li>
+        <li>Settings</li>
+        <li><a href="{% url 'vulnerability_list' %}">Vulnerabilities</a></li>
+    </ul>
 
     <!-- 👇 Sidebar Footer (User + Logout) -->
     <div class="sidebar-footer">
@@ -52,13 +52,27 @@
 <div class="main">
     <div class="header">
         <h1>Penetration Testing Dashboard</h1>
-        <div class="status">System Status: Active</div>
+        <p>User: {{ user_email|default:"Unknown User" }}</p>
+        <div class="status">System Status: <span class="status-active">Active</span></div>
+        <form method="POST" action="{% url 'logout' %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" style="
+        background-color:#ff4d4d;
+        color:white;
+        border:none;
+        padding:8px 12px;
+        border-radius:5px;
+        cursor:pointer;
+    ">
+                Logout
+            </button>
+        </form>
     </div>
 
     <div class="cards">
         <div class="card">
             <h3>Total Scans</h3>
-            <p>128</p>
+            <p>{{scans|length}}</p>
         </div>
         <div class="card">
             <h3>Critical Vulnerabilities</h3>
@@ -78,7 +92,7 @@
         <div class="code-box">
             <h2>Upload Code for Analysis</h2>
 
-            <form method="POST" action="{% url 'submit_code' %}">
+            <form method="POST" action="{% url 'submit_code' %}" enctype="multipart/form-data">
                 {% csrf_token %}
 
                 <div class="upload-tabs">
@@ -89,7 +103,7 @@
                 <!-- Upload File -->
                 <div class="tab-content active" id="file">
                     <label class="drop-zone">
-                        <input type="file" name="file">
+                        <input type="file" name="file" accept=".py,.js,.ts,.tsx,.jsx,.java,.go,.rs,.c,.cpp,.h,.cs,.php,.rb,.swift,.kt,.sql,.sh,.yaml,.yml,.json,.xml,.html,.css,.md,.txt">
                         <p>Drop your code file here<br>or <span>click to browse</span></p>
                     </label>
                 </div>
@@ -122,18 +136,22 @@
             </tr>
             </thead>
             <tbody>
-            <tr>
-                <td>example.com</td>
-                <td>02/14/2026</td>
-                <td class="critical">Critical</td>
-                <td>Completed</td>
+            {% for scan in scans %}
+            <tr onclick="window.location=this.dataset.url" 
+                data-url="{% url 'report_detail' scan.submission_id %}" 
+                style="cursor:pointer;">
+                <td>{{ scan.submission_name|default:"Unnamed submission" }}</td>
+                <td>{{ scan.uploaded_at|date:"m/d/Y" }}</td>
+                <td class="{% if scan.risk_level == 'Critical' %}critical{% elif scan.risk_level == 'High' %}high{% elif scan.risk_level == 'Medium' %}medium{% elif scan.risk_level == 'Low' %}low{% else %}info{% endif %}">
+                    {{ scan.risk_level|default:"N/A" }}
+                </td>
+                <td>{{ scan.scan_status|default:"Unknown" }}</td>
             </tr>
+            {% empty %}
             <tr>
-                <td>test-server.net</td>
-                <td>02/12/2026</td>
-                <td class="low">Low</td>
-                <td>Completed</td>
+                <td colspan="4">No recent scans yet.</td>
             </tr>
+            {% endfor %}
             </tbody>
         </table>
     </div>

@@ -118,9 +118,15 @@ def logout_view(request):
 # Dashboard
 # -------------------
 def dashboard_view(request):
-    if require_login(request):
-        return require_login(request)
-    return render(request, 'index.html')
+    auth_redirect = require_login(request)
+    if auth_redirect:
+        return auth_redirect
+
+    scans = CodeSubmission.objects.filter(
+        user_id=request.session["user_id"]
+    ).order_by("-uploaded_at")[:10]
+
+    return render(request, "index.html", {"scans": scans})
 
 # -------------------
 # Dummy Code Submission
@@ -188,6 +194,7 @@ def register_view(request):
             hashed_pass = make_password(password)
 
             user = User.objects.create(email=email, password_hash=hashed_pass)
+            request.session["user_id"] = user.user_id  # ← add this line
             request.session["user_email"] = user.email
             return redirect('dashboard')
 
