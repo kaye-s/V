@@ -1,0 +1,25 @@
+{
+  "name": "v",
+  "version": "1.0.0",
+  "description": "A Django app for user sign-up, sign-in, and a code upload and analysis flow. The pipeline runs **Semgrep** and **Gitleaks** as a pre-scan, then uses **OpenAI** to generate risk summaries and security-incident style reports, plus vulnerability lists and per-submission report pages.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kaye-s/V.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/kaye-s/V/issues"
+  },
+  "homepage": "https://github.com/kaye-s/V#readme",
+  "devDependencies": {
+    "electron": "^41.5.0"
+  }
+}
