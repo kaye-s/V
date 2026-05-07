@@ -537,6 +537,197 @@ body.theme-blue {
     color: #94a3b8;
 }
 
+/* ===== Settings — AI model spectrum ===== */
+.settings-page-box {
+    max-width: 720px;
+}
+
+.settings-form {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    margin-top: 8px;
+}
+
+.settings-theme-field {
+    display: grid;
+    gap: 10px;
+}
+
+.settings-field-label {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #e9d5ff;
+    letter-spacing: 0.02em;
+}
+
+.model-spectrum-card {
+    background: linear-gradient(
+        145deg,
+        rgba(17, 24, 39, 0.55),
+        rgba(46, 16, 101, 0.28)
+    );
+    border: 1px solid rgba(168, 85, 247, 0.35);
+    border-radius: 16px;
+    padding: 22px 22px 18px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+
+.model-spectrum-card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    flex-wrap: wrap;
+}
+
+.model-spectrum-desc {
+    margin: 8px 0 0;
+    font-size: 0.88rem;
+    line-height: 1.55;
+    color: #cbd5e1;
+    max-width: 42rem;
+}
+
+.model-spectrum-desc strong {
+    color: #f5f3ff;
+    font-weight: 600;
+}
+
+.model-spectrum-pill {
+    flex-shrink: 0;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.78rem;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: rgba(168, 85, 247, 0.2);
+    border: 1px solid rgba(196, 181, 253, 0.45);
+    color: #faf5ff;
+    white-space: nowrap;
+}
+
+.model-spectrum-axis {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 22px;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #94a3b8;
+}
+
+.model-spectrum-slider-wrap {
+    margin-top: 10px;
+    padding: 6px 0 4px;
+}
+
+.model-spectrum-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 10px;
+    border-radius: 999px;
+    background: linear-gradient(
+        90deg,
+        rgba(52, 211, 153, 0.45),
+        rgba(168, 85, 247, 0.75),
+        rgba(251, 113, 133, 0.35)
+    );
+    outline: none;
+}
+
+.model-spectrum-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #faf5ff;
+    border: 2px solid rgba(139, 92, 246, 0.95);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
+    cursor: pointer;
+}
+
+.model-spectrum-slider::-moz-range-thumb {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #faf5ff;
+    border: 2px solid rgba(139, 92, 246, 0.95);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
+    cursor: pointer;
+}
+
+.model-spectrum-slider::-moz-range-track {
+    height: 10px;
+    border-radius: 999px;
+}
+
+.model-spectrum-slider:focus-visible {
+    box-shadow: 0 0 0 3px rgba(196, 181, 253, 0.45);
+}
+
+.model-spectrum-slider:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.model-spectrum-ticks {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.model-spectrum-tick {
+    flex: 1;
+    min-width: 0;
+    padding: 8px 6px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.68rem;
+    line-height: 1.35;
+    text-align: center;
+    color: #94a3b8;
+    background: rgba(15, 23, 42, 0.5);
+    border: 1px solid rgba(168, 85, 247, 0.12);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s, background 0.2s;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.model-spectrum-tick:hover {
+    color: #e9d5ff;
+    border-color: rgba(168, 85, 247, 0.35);
+}
+
+.model-spectrum-tick.is-active {
+    color: #faf5ff;
+    border-color: rgba(196, 181, 253, 0.65);
+    background: rgba(88, 28, 135, 0.38);
+}
+
+.settings-env-note {
+    margin-top: 6px;
+    font-size: 0.85rem;
+}
+
+.settings-env-note code {
+    font-size: 0.82em;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: rgba(15, 23, 42, 0.65);
+    color: #e9d5ff;
+}
+
+.settings-save-btn {
+    align-self: flex-start;
+    margin-top: 8px;
+}
+
 .report-list {
     display: grid;
     gap: 18px;
