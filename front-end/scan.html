@@ -19,7 +19,7 @@
     </div>
 
     <div class="code-box wide-box">
-        <h2>Submit Code or Ask AI</h2>
+        <h2>Submit Code</h2>
         <form method="POST" action="{% url 'start_scan' %}" enctype="multipart/form-data">
             {% csrf_token %}
 
@@ -33,7 +33,6 @@
             <div class="upload-tabs">
                 <button type="button" class="tab-btn active" data-tab="file">Upload File</button>
                 <button type="button" class="tab-btn" data-tab="paste">Paste Code</button>
-                <button type="button" class="tab-btn" data-tab="question">Ask AI</button>
             </div>
 
             <div class="tab-content active" id="file">
@@ -45,10 +44,6 @@
 
             <div class="tab-content" id="paste">
                 <textarea name="code" placeholder="Paste raw code here..."></textarea>
-            </div>
-
-            <div class="tab-content" id="question">
-                <textarea name="text_question" placeholder="Describe the security concern or paste architecture notes for AI analysis..."></textarea>
             </div>
 
             <div class="line-range">

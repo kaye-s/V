@@ -14,43 +14,143 @@
 <div class="main">
     <div class="header">
         <h1>Settings</h1>
-        <div class="status">Personal Preferences</div>
+        <div class="status">Personal preferences</div>
     </div>
 
-    <div class="code-box">
+    <div class="code-box settings-page-box wide-box">
         {% if messages %}
         {% for message in messages %}
         <div class="form-message">{{ message }}</div>
         {% endfor %}
         {% endif %}
 
-        <form method="POST">
+        <form method="POST" class="settings-form">
             {% csrf_token %}
-            <div class="settings-grid">
-                <label>
-                    Background theme
-                    <select name="theme">
-                        {% for value, label in theme_choices %}
-                        <option value="{{ value }}" {% if settings.theme == value %}selected{% endif %}>{{ label }}</option>
-                        {% endfor %}
-                    </select>
-                </label>
 
-                <label>
-                    AI model
-                    <select name="ai_model">
-                        {% for model in ai_models %}
-                        <option value="{{ model }}" {% if settings.ai_model == model %}selected{% endif %}>{{ model }}</option>
-                        {% endfor %}
-                    </select>
-                </label>
+            <label class="settings-theme-field">
+                <span class="settings-field-label">Background theme</span>
+                <select name="theme">
+                    {% for value, label in theme_choices %}
+                    <option value="{{ value }}" {% if settings.theme == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+
+            <div class="model-spectrum-card">
+                <div class="model-spectrum-card-head">
+                    <div>
+                        <span class="settings-field-label">AI model</span>
+                        <p class="model-spectrum-desc">
+                            Slide toward <strong>faster</strong> for quicker replies with lighter reasoning, or toward <strong>more precise</strong> for slower, heavier analysis.
+                        </p>
+                    </div>
+                    <span class="model-spectrum-pill" id="settings-current-model" title="Selected model">{{ settings.ai_model|default_if_none:"" }}</span>
+                </div>
+
+                <div class="model-spectrum-axis">
+                    <span>Faster · lighter reasoning</span>
+                    <span>More precise · heavier reasoning</span>
+                </div>
+
+                <script type="application/json" id="settings-ai-models-data">{{ ai_models_spectrum_json }}</script>
+
+                <input type="hidden" name="ai_model" id="settings-ai-model-hidden" value="{{ settings.ai_model }}">
+
+                <div class="model-spectrum-slider-wrap">
+                    <input type="range"
+                           id="settings-ai-slider"
+                           class="model-spectrum-slider"
+                           min="0"
+                           max="{{ ai_slider_max }}"
+                           value="{{ ai_slider_index }}"
+                           step="1"
+                           aria-valuemin="0"
+                           aria-valuemax="{{ ai_slider_max }}"
+                           aria-valuenow="{{ ai_slider_index }}"
+                           {% if ai_slider_max == 0 %}disabled aria-disabled="true"{% endif %}>
+                </div>
+
+                {% if ai_models_spectrum %}
+                <div class="model-spectrum-ticks" id="settings-model-ticks">
+                    {% for model in ai_models_spectrum %}
+                    <button type="button"
+                            class="model-spectrum-tick {% if forloop.counter0 == ai_slider_index %}is-active{% endif %}"
+                            data-index="{{ forloop.counter0 }}"
+                            tabindex="-1">{{ model }}</button>
+                    {% endfor %}
+                </div>
+                {% endif %}
             </div>
 
-            <p class="muted">Model choices come from your environment: `OPENAI_MODEL_CHOICES`, with `OPENAI_REPORT_MODEL` as the fallback.</p>
-            <button class="scan-btn" type="submit">Save Settings</button>
+            <p class="muted settings-env-note">
+                Allowed models come from <code>OPENAI_MODEL_CHOICES</code> on the server; the default fallback is <code>OPENAI_REPORT_MODEL</code>.
+            </p>
+            <button class="scan-btn settings-save-btn" type="submit">Save settings</button>
         </form>
     </div>
 </div>
 {% include "includes/ai_assistant.html" %}
+
+<script>
+(function () {
+    var jsonEl = document.getElementById("settings-ai-models-data");
+    var slider = document.getElementById("settings-ai-slider");
+    var hidden = document.getElementById("settings-ai-model-hidden");
+    var label = document.getElementById("settings-current-model");
+    var ticksWrap = document.getElementById("settings-model-ticks");
+    if (!jsonEl || !slider || !hidden || !label) return;
+
+    var models = [];
+    try {
+        models = JSON.parse(jsonEl.textContent || "[]");
+    } catch (e) {
+        return;
+    }
+    if (!models.length) return;
+
+    function clampIndex(i) {
+        var max = models.length - 1;
+        if (max < 0) return 0;
+        var n = parseInt(String(i), 10);
+        if (isNaN(n)) n = 0;
+        return Math.min(Math.max(n, 0), max);
+    }
+
+    function setUi(idx, syncTicks) {
+        idx = clampIndex(idx);
+        slider.value = String(idx);
+        slider.setAttribute("aria-valuenow", String(idx));
+        slider.setAttribute("aria-valuetext", models[idx] || "");
+        hidden.value = models[idx] || "";
+        label.textContent = models[idx] || "";
+
+        if (syncTicks && ticksWrap) {
+            var ticks = ticksWrap.querySelectorAll(".model-spectrum-tick");
+            ticks.forEach(function (btn, i) {
+                btn.classList.toggle("is-active", i === idx);
+            });
+        }
+    }
+
+    var rawSaved = hidden.value;
+    var idxFromSaved = models.indexOf(rawSaved);
+    var startIdx = idxFromSaved >= 0 ? idxFromSaved : clampIndex(parseInt(slider.value, 10));
+    setUi(startIdx, true);
+
+    slider.addEventListener("input", function () {
+        setUi(slider.value, true);
+    });
+
+    if (ticksWrap) {
+        ticksWrap.addEventListener("click", function (ev) {
+            var btn = ev.target.closest(".model-spectrum-tick");
+            if (!btn || !ticksWrap.contains(btn)) return;
+            var ix = btn.getAttribute("data-index");
+            if (ix == null) return;
+            setUi(ix, true);
+        });
+    }
+})();
+</script>
 </body>
 </html>

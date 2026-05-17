@@ -3,6 +3,7 @@ from django.contrib.auth.hashers import make_password, check_password
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.utils import timezone
+from django.utils.safestring import mark_safe
 from decouple import config
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -16,8 +17,6 @@ import re
 import tempfile
 import shutil
 
-from .serializers import CodeSubmissionSerializer
-from .tasks import run_analysis_sync
 from .services.ai_service import ask_ai
 from .services.incident_report_ai import generate_incident_report_ai_payload
 from .utils.incident_report import (
@@ -29,7 +28,7 @@ from .utils.incident_report import (
 from .utils.openai_usage import record_openai_usage_for_user
 from .utils.prescan import run_semgrep, run_gitleaks
 
-from .models import CodeSubmission, File, Threat, CWE, User, DepartmentJoinRequest, ReportComment, UserSetting
+from .models import CodeSubmission, CWE, User, DepartmentJoinRequest, ReportComment, UserSetting
 
 # Max upload size for scan (bytes).
 MAX_UPLOAD_BYTES = 2 * 1024 * 1024
@@ -85,6 +84,29 @@ def _available_ai_models():
     if DEFAULT_AI_MODEL not in models:
         models.insert(0, DEFAULT_AI_MODEL)
     return models
+
+
+# Left → right: faster / lighter vs slower / more precise (see Settings UI).
+_AI_MODEL_SPEED_ORDER = ["gpt-5.4-mini", "gpt-5.4", "gpt-5.5"]
+
+
+def _ai_models_spectrum():
+    """Same models as env allows, ordered for the speed ↔ precision slider."""
+    available = _available_ai_models()
+    avail_set = set(available)
+    ordered = [m for m in _AI_MODEL_SPEED_ORDER if m in avail_set]
+    remainder = sorted(m for m in available if m not in ordered)
+    return ordered + remainder
+
+
+def _ai_slider_index(spectrum, saved_model: str) -> int:
+    if not spectrum:
+        return 0
+    if saved_model in spectrum:
+        return spectrum.index(saved_model)
+    if DEFAULT_AI_MODEL in spectrum:
+        return spectrum.index(DEFAULT_AI_MODEL)
+    return 0
 
 
 def _parse_focus_lines(request):
@@ -315,50 +337,7 @@ def assistant_chat_view(request):
         return JsonResponse({"error": str(exc)}, status=502)
     return JsonResponse({"reply": reply or ""})
 
-def scan_view(request):
-    target_path = "/path/to/code"  # you could get this from request.POST
-    report = {
-        "input_path": str(Path(target_path).resolve()),
-        "semgrep": run_semgrep(target_path),
-        "gitleaks": run_gitleaks(target_path),
-    }
-    return JsonResponse(report)
 
-# -------------------
-# Create a new code submission and run analysis
-# -------------------
-
-class SubmissionView(APIView):
-
-    def post(self, request):
-
-        user_id = request.session.get("user_id")
-        if not user_id:
-            return Response({"error": "Authentication required"}, status=401)
-
-        try:
-            user = User.objects.get(user_id=user_id)
-        except User.DoesNotExist:
-            return Response({"error": "User not found"}, status=404)
-
-        serializer = CodeSubmissionSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        # create submission
-        submission = serializer.save(user=request.user)
-
-        # run analysis (sync for now)
-        run_analysis_sync(submission.submission_id)
-
-        return Response({
-            "submission_id": submission.submission_id,
-            "simplified_summary": submission.simplified_summary
-        }, status=201)
-
-
-# -------------------
-# Check status and results of a submission
-# -------------------
 class SubmissionStatusView(APIView):
 
     def get(self, request, submission_id):
@@ -466,7 +445,6 @@ def submit_code(request):
 
     uploaded = request.FILES.get("file")
     code_paste = request.POST.get("code", "").strip()
-    text_question = request.POST.get("text_question", "").strip()
     report_title = _clean_report_title(request)
     focus_start, focus_end, line_error = _parse_focus_lines(request)
     if line_error:
@@ -506,15 +484,6 @@ def submit_code(request):
             scan_input_type=CodeSubmission.INPUT_PASTE,
             focus_start_line=focus_start,
             focus_end_line=focus_end,
-            report_title=report_title,
-        )
-
-    if text_question:
-        return _run_incident_scan(
-            request,
-            text_question,
-            {"origin": "text", "filename": "security_question.txt"},
-            scan_input_type=CodeSubmission.INPUT_TEXT,
             report_title=report_title,
         )
 
@@ -676,13 +645,20 @@ def settings_view(request):
         messages.success(request, "Settings saved.")
         return redirect("settings")
 
+    spectrum = _ai_models_spectrum()
+    slider_index = _ai_slider_index(spectrum, settings.ai_model or "")
+    slider_max = max(len(spectrum) - 1, 0)
+
     return render(
         request,
         "settings.html",
         {
             "settings": settings,
             "theme_choices": UserSetting.THEME_CHOICES,
-            "ai_models": _available_ai_models(),
+            "ai_models_spectrum": spectrum,
+            "ai_models_spectrum_json": mark_safe(json.dumps(spectrum)),
+            "ai_slider_index": slider_index,
+            "ai_slider_max": slider_max,
         },
     )
 

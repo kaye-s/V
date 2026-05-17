@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-from .views import login_view, SubmissionView, SubmissionStatusView, vulnerability_list
+from .views import SubmissionStatusView
 
 urlpatterns = [
     # Login / Logout
